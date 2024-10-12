@@ -1,1 +1,4 @@
-torch
+pandas
+matplotlib
+seaborn
+openpyxl
