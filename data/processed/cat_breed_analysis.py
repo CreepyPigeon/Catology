@@ -13,8 +13,14 @@ def _remove_columns(file_path):
 
     return df_modified
 
+    # oversampling documentare
+    # unknown - per atribut: stergi instanta sau media sau sirul vid
 
 def map_age(age: float):
+
+    if isinstance(age, (int, float)):
+        return age
+
     if age == 'Less than 1':
         return 0.5
     elif age == '1-2 years':
@@ -22,10 +28,13 @@ def map_age(age: float):
     elif age == '2-10 years':
         return 6
     elif age == 'More than 10':
-        return 12
-    else:
-        return -1
+        return 15
 
+class OriginalDatasetAnalyzer:
+    def __init__(self, file_path=None):
+        # TO-DO functions for getting the missing values,
+        # instances that repeat, write the results to 'errors.txt' in the 'results' Directory
+        pass
 
 class CatBreedAnalyzer:
     def __init__(self, file_path=None):
@@ -36,6 +45,13 @@ class CatBreedAnalyzer:
         else:
             self.data = _remove_columns(file_path)
             self.analyzed_data = None
+
+        # self._transform_age_column()
+        # self._transform_sex_column()  # F = 0; M = 1
+        # self._transform_abundance_column()
+        # self._transform_race_column()
+        # self._transform_
+
 
     def analyze_missing_values(self):
         missing_values = self.data.isnull().sum()
@@ -77,6 +93,10 @@ class CatBreedAnalyzer:
         print('\n')
         self.check_balance()
 
+    # ASTA MAI LA FINAL
+    # trebuie facut automat pentru fiecare coloana
+    # pe langa histograme si boxplot-uri (de invatat de citit si astea)
+    #, la final, adaugi boxplot-urile si histogramele ca imagini in Direcotrul numit results
     def extract_and_plot_distinct_values(self, column):
         if column not in self.data.columns:
             print(f"Column '{column}' does not exist in the data.")
@@ -122,47 +142,58 @@ class CatBreedAnalyzer:
             print(f"Column '{column}' does not exist in the data.")
             return
 
-        plt.figure(figsize=(10, 6))  # Set the figure size
+        plt.figure(figsize=(10, 6))
         sns.histplot(self.data[column], bins=30, kde=True)  # Create a histogram with KDE
-        plt.title(f"Histogram of {column}")  # Title of the plot
-        plt.xlabel(column)  # X-axis label
-        plt.ylabel('Frequency')  # Y-axis label
-        plt.show()  # Show the plot
+        plt.title(f"Histogram of {column}")
+        plt.xlabel(column)
+        plt.ylabel('Frequency')
+        plt.show()
 
-    def transform_sex_column(self):
+    def _transform_sex_column(self):
         self.data['Sex'] = self.data['Sex'].replace({'F': 0, 'M': 1})
         self.save_to_csv()  # Save after transforming sex column
 
-    def transform_age_column(self):
-
+    def _transform_age_column(self):
         self.data['Age'] = self.data['Age'].apply(map_age)
         self.save_to_csv()
 
-    def transform_abundance_column(self):
+    def _transform_abundance_column(self):
         self.data['Abundance of natural areas'] = self.data['Abundance of natural areas'].replace('Unknown', 0)
         self.data['Abundance of natural areas'] = pd.to_numeric(self.data['Abundance of natural areas'])
         self.save_to_csv()
 
-    def transform_race_column(self):
-        # Factorize the 'Race' column to get numerical codes and unique values
-        self.data['Race_Code'], unique_races = pd.factorize(self.data['Race'])
+    """
+    Factorizes the 'Race' column to get numerical and unique values
+    Adds the numerical codes as a new column called 'Numerical Race'
+    Renames the original 'Race' column to 'Race_Description' and keeps it
+    Drops the original 'Race' column
+    Reorders the columns so that 'Numerical Race' and 'Race_Description' are at the end
+    """
 
-        # Add the string representation at the end of the dataframe
-        self.data['Race_Description'] = unique_races[self.data['Race_Code']]
+    def _transform_race_column(self):
 
-        # Optionally, drop the original 'Race' column if it's no longer needed
-        self.data = self.data.drop(columns=['Race'])  # Drop the original 'Race' column
-        self.save_to_csv()  # Save after adding numerical consistency
+        if 'Numerical Race' in self.data.columns and 'Race Description' in self.data.columns:
+            print("Transformation has already been applied. No further changes made.")
+            return
+
+        numerical_race, unique_races = pd.factorize(self.data['Race'])
+
+        self.data['Numerical Race'] = numerical_race
+        self.data['Race_Description'] = self.data['Race']
+        self.data = self.data.drop(columns=['Race'])
+
+        other_columns = [col for col in self.data.columns if col not in ['Numerical Race', 'Race Description']]
+        self.data = self.data[other_columns + ['Numerical Race', 'Race Description']]
+
+        self.save_to_csv()
 
     def add_numerical_consistency(self):
-        self.transform_sex_column()
-        self.transform_age_column()
-        self.transform_abundance_column()
-        self.transform_race_column()
+        # am nevoie si pentru place_of_living de transformat in valoare numerica
+        self._transform_abundance_column()
+        self._transform_race_column()
 
     def save_to_csv(self, file='modified_dataset.csv'):
         self.data.to_csv(file_name, index=False)
-        print(f"Data saved to {file}")
 
     # the correlation matrix still needs work
     def build_correlation_matrix(self):
@@ -190,6 +221,7 @@ if __name__ == "__main__":
     # instantiate the analyzer only if the file does not exist
     if not os.path.isfile(full_file_path):
         analyzer = CatBreedAnalyzer("Translated_Cat_Dataset.xlsx")
+        print("Analyzer successfully instantiated")
     else:
         print(f"{full_file_path} already exists. Analyzer not instantiated.")
         analyzer = CatBreedAnalyzer()
@@ -197,7 +229,8 @@ if __name__ == "__main__":
     # analyzer.analyze_missing_values()
     # analyzer.check_and_drop_repeated_instances()
 
-    # analyzer.extract_and_plot_distinct_values('Number of cats in the household')
+    # + boxplot-uri
+    analyzer.extract_and_plot_distinct_values('Age')
 
     # analyzer.count_and_show_instances_per_breed()
 
@@ -205,4 +238,4 @@ if __name__ == "__main__":
 
     # YOU CAN RUN EVERYTHING EXCEPT OF THIS LITTLE FUNCTION
     # AND EVERY HELPER ASSOCIATED WITH IT
-    analyzer.build_correlation_matrix()
+    # analyzer.build_correlation_matrix()
