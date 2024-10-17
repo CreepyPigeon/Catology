@@ -30,6 +30,18 @@ def map_age(age: float):
     elif age == 'More than 10':
         return 15
 
+def map_place_of_living(place):
+    if place == "ASB":
+        return 1
+    elif place == "AAB":
+        return 2
+    elif place == "ML":
+        return 3
+    elif place == "MI":
+        return 4
+    else:
+        return place
+
 class OriginalDatasetAnalyzer:
     def __init__(self, file_path=None):
         # TO-DO functions for getting the missing values,
@@ -51,17 +63,35 @@ class CatBreedAnalyzer:
         # self._transform_abundance_column()
         # self._transform_race_column()
         # self._transform_
+        self.results_directory = r"Catology\data\results"
+        self.errors_file = os.path.join(self.results_directory, 'potential_errors.txt')
+        if not os.path.exists(self.results_directory):
+            os.makedirs(self.results_directory)
 
+    def write_errors(self, content):
+        with open(self.errors_file, 'a') as f:
+            f.write(content + '\n')
 
     def analyze_missing_values(self):
         missing_values = self.data.isnull().sum()
-        print("Missing Values:\n", missing_values)
+        unknown_values = (self.data == 'Unknown').sum()
+        combined_report = missing_values + unknown_values
+        self.write_errors("Missing or 'Unknown' Values:\n" + str(combined_report))
+        print("Missing or 'Unknown' Values:\n", combined_report)
 
     def check_and_drop_repeated_instances(self):
         repeated_instances = self.data[self.data.duplicated()]
         print("Repeated Instances:\n", repeated_instances)
+        self.write_errors("Repeated Instances:\n" + str(repeated_instances))
         print('Dropping them ...')
         self.data = self.data.drop_duplicates()
+
+    def check_and_drop_unknown_instances(self):  # this one should run after _transform_abundance_column
+        unknown_instances = self.data[self.data.isin(['Unknown']).any(axis=1)]
+        print(f"Rows with 'Unknown' values:\n{unknown_instances}")
+        self.data = self.data.drop(unknown_instances.index)
+        self.save_to_csv()
+        print(f"Dropped {len(unknown_instances)} rows containing 'Unknown' values.")
 
     # bar plot since the data is not numerical
     def count_and_show_instances_per_breed(self):
@@ -91,6 +121,7 @@ class CatBreedAnalyzer:
         plt.show()
 
         print('\n')
+        
         self.check_balance()
 
     # ASTA MAI LA FINAL
@@ -113,7 +144,12 @@ class CatBreedAnalyzer:
         plt.ylabel('Count')
         plt.xticks(rotation=45)
         plt.tight_layout()
+        results_directory = os.path.join("Catology", "data", "results")
+        os.makedirs(results_directory, exist_ok=True)
+        plt.savefig(os.path.join(results_directory, f'{column}_distinct_values.png')) # asta o salveaza ca si poza
+
         plt.show()
+
 
     # calculate the count of occurrences for each unique value in the 'Race' column of the DataFrame.
     # return whether the minimum count of any breed is equal to the maximum count.
@@ -158,8 +194,14 @@ class CatBreedAnalyzer:
         self.save_to_csv()
 
     def _transform_abundance_column(self):
-        self.data['Abundance of natural areas'] = self.data['Abundance of natural areas'].replace('Unknown', 0)
-        self.data['Abundance of natural areas'] = pd.to_numeric(self.data['Abundance of natural areas'])
+        self.data['Abundance of natural areas'] = self.data['Abundance of natural areas'].replace('Unknown', np.nan)
+        self.data['Abundance of natural areas'] = pd.to_numeric(self.data['Abundance of natural areas'], errors='coerce')
+        mean_value = int(self.data['Abundance of natural areas'].mean())
+        self.data['Abundance of natural areas'] = self.data['Abundance of natural areas'].fillna(mean_value)
+        self.save_to_csv()
+
+    def _transform_place_of_living(self):
+        self.data['Place of living'] = self.data['Place of living'].apply(map_place_of_living)
         self.save_to_csv()
 
     """
@@ -189,7 +231,10 @@ class CatBreedAnalyzer:
 
     def add_numerical_consistency(self):
         # am nevoie si pentru place_of_living de transformat in valoare numerica
+        # am facut place of living - Cosmin
+        self._transform_place_of_living()
         self._transform_abundance_column()
+        self._transform_place_of_living()
         self._transform_race_column()
 
     def save_to_csv(self, file='modified_dataset.csv'):
@@ -226,8 +271,10 @@ if __name__ == "__main__":
         print(f"{full_file_path} already exists. Analyzer not instantiated.")
         analyzer = CatBreedAnalyzer()
 
-    # analyzer.analyze_missing_values()
-    # analyzer.check_and_drop_repeated_instances()
+    # analyzer.add_numerical_consistency()
+    analyzer.analyze_missing_values()
+    analyzer.check_and_drop_repeated_instances()
+    analyzer.check_and_drop_unknown_instances()  # - should be run after transform_abundance_column()
 
     # + boxplot-uri
     analyzer.extract_and_plot_distinct_values('Age')
