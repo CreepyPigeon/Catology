@@ -1,4 +1,4 @@
-hello, hello, hello how lowMissing or 'Unknown' Values:
+Missing or 'Unknown' Values:
 Sex                                  6
 Age                                  0
 Race                                80
@@ -26,6 +26,8 @@ Abundance of natural areas         240
 Bird capturing frequency             0
 Mammal capturing frequency           0
 dtype: int64
+
+
 Repeated Instances:
      Sex          Age      Race  ... Abundance of natural areas Bird capturing frequency Mammal capturing frequency
 245    M  Less than 1  European  ...                          3                        0                          0
@@ -33,4 +35,3 @@ Repeated Instances:
 252    F  Less than 1   Unknown  ...                          3                        0                          0
 1722   F   2-10 years    Bengal  ...                          1                        0                          0
 
-[4 rows x 26 columns]
