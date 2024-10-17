@@ -46,7 +46,39 @@ class OriginalDatasetAnalyzer:
     def __init__(self, file_path=None):
         # TO-DO functions for getting the missing values,
         # instances that repeat, write the results to 'errors.txt' in the 'results' Directory
-        pass
+        self.data = _remove_columns(file_path)
+        self.analyzed_data = None
+        self.results_directory = r"Catology\data\results"
+        self.errors_file = os.path.join(self.results_directory, 'potential_errors.txt')
+        if not os.path.exists(self.results_directory):
+            os.makedirs(self.results_directory)
+
+    def write_errors(self, content):
+        with open(self.errors_file, 'a') as f:
+            f.write(content + '\n')
+
+    def analyze_missing_values(self):
+        missing_values = self.data.isnull().sum()
+        unknown_values = (self.data == 'Unknown').sum()
+        combined_report = missing_values + unknown_values
+        self.write_errors("Missing or 'Unknown' Values:\n" + str(combined_report))
+        print("Missing or 'Unknown' Values:\n", combined_report)
+
+    def transform_abundance_column(self):
+        file_path = "Catology\data\processed\Translated_Cat_Dataset.xlsx"
+        df = pd.read_excel(file_path)
+        df['Abundance of natural areas'] = df['Abundance of natural areas'].replace('Unknown', np.nan)
+        df['Abundance of natural areas'] = pd.to_numeric(df['Abundance of natural areas'], errors='coerce')
+        median_value = int(df['Abundance of natural areas'].median())
+        df['Abundance of natural areas'] = df['Abundance of natural areas'].fillna(median_value)
+        df.to_excel(file_path, index=False)
+        print(f"Replaced 'Unknown' values with the median: {median_value}")
+        # modifica direct pe excel
+    
+    def check_repeated_instances(self):
+        repeated_instances = self.data[self.data.duplicated()]
+        print("Repeated Instances:\n", repeated_instances)
+        self.write_errors("Repeated Instances:\n" + str(repeated_instances))
 
 class CatBreedAnalyzer:
     def __init__(self, file_path=None):
@@ -265,19 +297,23 @@ if __name__ == "__main__":
 
     # instantiate the analyzer only if the file does not exist
     if not os.path.isfile(full_file_path):
-        analyzer = CatBreedAnalyzer("Translated_Cat_Dataset.xlsx")
+        analyzer = OriginalDatasetAnalyzer("Catology\data\processed\Translated_Cat_Dataset.xlsx") # tu il aveai doar ca "Translated_Cat_Dataset.xlsx", nu stiu cum iti mergea
         print("Analyzer successfully instantiated")
     else:
         print(f"{full_file_path} already exists. Analyzer not instantiated.")
         analyzer = CatBreedAnalyzer()
 
-    # analyzer.add_numerical_consistency()
     analyzer.analyze_missing_values()
-    analyzer.check_and_drop_repeated_instances()
-    analyzer.check_and_drop_unknown_instances()  # - should be run after transform_abundance_column()
+    analyzer.transform_abundance_column()
+    analyzer.check_repeated_instances()
+
+    # analyzer.add_numerical_consistency()
+    # analyzer.analyze_missing_values()
+    # analyzer.check_and_drop_repeated_instances()
+    # analyzer.check_and_drop_unknown_instances()  # - should be run after transform_abundance_column()
 
     # + boxplot-uri
-    analyzer.extract_and_plot_distinct_values('Age')
+    #analyzer.extract_and_plot_distinct_values('Age')
 
     # analyzer.count_and_show_instances_per_breed()
 
