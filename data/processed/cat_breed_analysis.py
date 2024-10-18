@@ -1,138 +1,37 @@
 import os
-import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from dotenv import load_dotenv
+from data_processing import clean_data
 
 load_dotenv()
 path = os.getenv('FILE_PATH')
 results_dir = os.getenv('RESULTS_DIR')
-
-def _remove_columns(file_path):
-    df = pd.read_excel(file_path)
-    df = df.drop(df.columns[[0, 1, -1]], axis=1)
-    df.to_excel('modified_dataset.xlsx', index=False)
-    df_modified = pd.read_excel('modified_dataset.xlsx')
-
-    return df_modified
-
-
-def map_age(age: float):
-    if isinstance(age, (int, float)):
-        return age
-
-    if age == 'Less than 1':
-        return 0.5
-    elif age == '1-2 years':
-        return 1.5
-    elif age == '2-10 years':
-        return 6
-    elif age == 'More than 10':
-        return 15
-
-def map_area(designated_area):
-    if isinstance(designated_area, int):
-        return designated_area
-
-    if designated_area == 'U':
-        return 1
-    elif designated_area == 'R':
-        return 2
-    elif designated_area == 'PU':
-        return 3
-
-def map_cats(number_of_cats):
-    return 6 if number_of_cats == 'Over 5' else int(number_of_cats)
-
-def map_sex(sex):
-
-    if sex == 'F':
-        return 0
-    elif sex == 'M':
-        return 1
-
-    return sex
-
-
-def map_place_of_living(place):
-    if place == "ASB":
-        return 1
-    elif place == "AAB":
-        return 2
-    elif place == "ML":
-        return 3
-    elif place == "MI":
-        return 4
-    else:
-        return place
-
-
-class OriginalDatasetAnalyzer:
-    def __init__(self, file_path=None):
-        self.data = _remove_columns(file_path)
-        self.analyzed_data = None
-        self.results_directory = r"Catology\data\results"
-        self.errors_file = os.path.join(self.results_directory, 'potential_errors.txt')
-        if not os.path.exists(self.results_directory):
-            os.makedirs(self.results_directory)
-
-    def write_errors(self, content):
-        with open(self.errors_file, 'a') as f:
-            f.write(content + '\n')
-
-    def analyze_missing_values(self):
-        missing_values = self.data.isnull().sum()
-        unknown_values = (self.data == 'Unknown').sum()
-        combined_report = missing_values + unknown_values
-        self.write_errors("Missing or 'Unknown' Values:\n" + str(combined_report))
-        print("Missing or 'Unknown' Values:\n", combined_report)
-
-    def check_repeated_instances(self):
-        repeated_instances = self.data[self.data.duplicated()]
-        print("Repeated Instances:\n", repeated_instances)
-        self.write_errors("Repeated Instances:\n" + str(repeated_instances))
-
+errors_file = os.getenv('ERRORS_FILE')
+new_data = os.getenv('NEW_DATA')
 
 class CatBreedAnalyzer:
-    def __init__(self, file_path=None):
+    def __init__(self, original, new_dataset=None):
 
-        # self.data is a dataframe
-        if file_path is None:
-            self.data = pd.read_excel('modified_dataset.xlsx')
+        if new_dataset and os.path.isfile(new_dataset):
+            # it exists, load the new dataset
+            print(f"Loading existing dataset: {new_dataset}")
+            self.data = pd.read_excel(new_dataset)
         else:
-            self.data = _remove_columns(file_path)
-            self.analyzed_data = None
+            # new_dataset doesn't exist, clean the original dataset and save it to the new dataset
+            print(f"Cleaning original dataset: {original}")
+            self.data = clean_data(original)
 
-        self.results_directory = r"Catology\data\results"
-        self.errors_file = os.path.join(self.results_directory, 'potential_errors.txt')
+            # save the cleaned dataset to the new dataset file
+            if new_dataset:
+                self.data.to_excel(new_dataset, index=False)
+                print(f"Cleaned dataset saved as: {new_dataset}")
+
+        self.results_directory = results_dir
+        self.errors_file = errors_file
         if not os.path.exists(self.results_directory):
             os.makedirs(self.results_directory)
-
-    def write_errors(self, content):
-        with open(self.errors_file, 'a') as f:
-            f.write(content + '\n')
-
-    def analyze_missing_values(self):
-        missing_values = self.data.isnull().sum()
-        unknown_values = (self.data == 'Unknown').sum()
-        combined_report = missing_values + unknown_values
-        self.write_errors("Missing or 'Unknown' Values:\n" + str(combined_report))
-        print("Missing or 'Unknown' Values:\n", combined_report)
-
-    def check_and_drop_repeated_instances(self):
-        repeated_instances = self.data[self.data.duplicated()]
-        print("Repeated Instances:\n", repeated_instances)
-        self.write_errors("Repeated Instances:\n" + str(repeated_instances))
-        print('Dropping them ...')
-        self.data = self.data.drop_duplicates()
-
-    def check_and_drop_unknown_instances(self):  # this one should run after _transform_abundance_column
-        unknown_instances = self.data[self.data.isin(['Unknown']).any(axis=1)]
-        print(f"Rows with 'Unknown' values:\n{unknown_instances}")
-        self.data = self.data.drop(unknown_instances.index)
-        self.save_to_excel()
-        print(f"Dropped {len(unknown_instances)} rows containing 'Unknown' values.")
 
     # bar plot since the data is not numerical
     def count_and_show_instances_per_breed(self):
@@ -168,6 +67,7 @@ class CatBreedAnalyzer:
             plt.close()  # Close the plot to free up memory
 
         plt.savefig(boxplot_file)
+        print('Successfully saved the boxplot of cat breeds')
         plt.close()
 
     def plot_columns(self):
@@ -243,6 +143,7 @@ class CatBreedAnalyzer:
     nature more clearly than a histogram might.
     """
 
+    # trebuie si asta pusa in directory-ul de rezultate
     def visualize_distribution(self, column):
         if column not in self.data.columns:
             print(f"Column '{column}' does not exist in the data.")
@@ -255,103 +156,25 @@ class CatBreedAnalyzer:
         plt.ylabel('Frequency')
         plt.show()
 
-    def _transform_sex_column(self):
-        self.data['Sex'] = self.data['Sex'].apply(map_sex)
-        self.save_to_excel()
-
-    def _transform_area_column(self):
-        self.data['Urban/Rural area'] = self.data['Urban/Rural area'].apply(map_area)
-        self.save_to_excel()
-
-    def _transform_number_of_cats_column(self):
-        self.data['Number of cats in the household'] = self.data['Number of cats in the household'].apply(map_cats)
-        self.save_to_excel()
-
-    def _transform_age_column(self):
-        self.data['Age'] = self.data['Age'].apply(map_age)
-        self.save_to_excel()
-
-    def _transform_place_of_living(self):
-        self.data['Place of living'] = self.data['Place of living'].apply(map_place_of_living)
-        self.save_to_excel()
-
-    """
-    Factorizes the 'Race' column to get numerical and unique values
-    Adds the numerical codes as a new column called 'Numerical Race'
-    Renames the original 'Race' column to 'Race_Description' and keeps it
-    Drops the original 'Race' column
-    Reorders the columns so that 'Numerical Race' and 'Race_Description' are at the end
-    """
-
-    def _transform_abundance_column(self):
-
-        file_path = path
-        df = pd.read_excel(file_path)
-        df['Abundance of natural areas'] = df['Abundance of natural areas'].replace('Unknown', np.nan)
-        df['Abundance of natural areas'] = pd.to_numeric(df['Abundance of natural areas'], errors='coerce')
-        median_value = int(df['Abundance of natural areas'].median())
-        df['Abundance of natural areas'] = df['Abundance of natural areas'].fillna(median_value)
-        df.to_excel(file_path, index=False)
-        print(f"Replaced 'Unknown' values with the median: {median_value}")
-
-    def _transform_race_column(self):
-
-        if 'Numerical Race' in self.data.columns and 'Race Description' in self.data.columns:
-            print("Transformation has already been applied. No further changes made.")
-            return
-
-        # Factorize 'Race' column to get numerical encoding and unique races
-        numerical_race, unique_races = pd.factorize(self.data['Race'])
-
-        # Add 'Numerical Race' column and rename 'Race' to 'Race Description'
-        self.data['Numerical Race'] = numerical_race
-        self.data['Race Description'] = self.data['Race']
-        self.data = self.data.drop(columns=['Race'])
-
-        # Reorder columns, placing 'Numerical Race' and 'Race Description' at the end
-        other_columns = [col for col in self.data.columns if col not in ['Numerical Race', 'Race Description']]
-        self.data = self.data[other_columns + ['Numerical Race', 'Race Description']]
-
-        # Save the modified DataFrame to Excel
-        self.save_to_excel()
-
-    def add_numerical_consistency(self):
-        # am nevoie si pentru place_of_living de transformat in valoare numerica
-        # am facut place of living - Cosmin
-
-        """
-        self._transform_place_of_living()
-
-        self._transform_abundance_column()
-
-        self._transform_age_column()
-        self._transform_sex_column()
-
-        self._transform_area_column()
-        self._transform_number_of_cats_column()
-
-        # trebuie rulat si asta de jos de aici
-        # self._transform_race_column()
-        """
-        self._transform_race_column()
-
-    def save_to_excel(self, file=path):
-        self.data.to_excel(file_name, index=False)
-
     # the correlation matrix still needs work
     def build_correlation_matrix(self):
 
         os.makedirs(results_dir, exist_ok=True)  # Create the directory if it doesn't exist
 
-        # only numerical columns
-        numerical_data = self.data.iloc[:, :-1]  # All columns except the last one
+        # Select only numerical columns (e.g., float, int) and exclude non-numerical columns like 'Race Description'
+        numerical_data = self.data.select_dtypes(include=[float, int])
 
-        # compute the correlation matrix
+        # Check if any numerical columns are available
+        if numerical_data.empty:
+            print("No numerical columns found to compute correlation matrix.")
+            return
+
+        # Compute the correlation matrix
         correlation_matrix = numerical_data.corr()
 
         plt.figure(figsize=(12, 8))
 
-        # heatmap with the correlation matrix
+        # Heatmap with the correlation matrix
         sns.heatmap(correlation_matrix, annot=True, fmt=".2f", cmap='coolwarm', square=True, cbar_kws={"shrink": .8})
 
         plt.title('Correlation Matrix')
@@ -367,33 +190,24 @@ class CatBreedAnalyzer:
 
 
 if __name__ == "__main__":
+    # mai trebuie testat ca am push pasii in ordinea corecta si ca totul merge
 
-    # the full relative path
-    file_name = 'modified_dataset.xlsx'
+    original_dataset = 'Translated_Cat_Dataset.xlsx'
+    modified_dataset = new_data
 
     # get the full path based on the current working directory
-    full_file_path = os.path.join(os.getcwd(), file_name)
+    full_file_path = os.path.join(os.getcwd(), original_dataset)
 
     # instantiate the analyzer only if the file does not exist
     if not os.path.isfile(full_file_path):
-        analyzer = OriginalDatasetAnalyzer(path)
+        analyzer = CatBreedAnalyzer(full_file_path)
         print("Analyzer successfully instantiated")
     else:
         print(f"{full_file_path} already exists. Analyzer not instantiated.")
-        analyzer = CatBreedAnalyzer()
-
-    # analyzer.analyze_missing_values()
-
-    # analyzer.add_numerical_consistency()
-    # analyzer.analyze_missing_values()
-    # analyzer.check_and_drop_repeated_instances()
-    # analyzer.check_and_drop_unknown_instances()  # - should be run after transform_abundance_column()
-
-    # + boxplot-uri
-    # analyzer.plot_columns()
-
-    # analyzer.count_and_show_instances_per_breed()
-
-    # analyzer.visualize_distribution('Age')
+        analyzer = CatBreedAnalyzer(full_file_path, modified_dataset)
 
     analyzer.build_correlation_matrix()
+    analyzer.plot_columns()
+
+    print('Now showing instances per breed')
+    analyzer.count_and_show_instances_per_breed()
