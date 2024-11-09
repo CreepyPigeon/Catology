@@ -2,14 +2,16 @@ import os
 import numpy as np
 import pandas as pd
 from dotenv import load_dotenv
-from utils import write_errors, save_to_excel, print_fixed_length_message
-from utils import map_sex, map_age, map_area, map_cats, map_place_of_living
+from imblearn.over_sampling import SMOTE
+from data.processed.utils import print_fixed_length_message, save_to_excel, map_age, map_area, map_cats, map_sex, \
+    map_place_of_living, write_errors
 
 load_dotenv()
 path = os.getenv('FILE_PATH')
 results_dir = os.getenv('RESULTS_DIR')
 errors_file = os.getenv('ERRORS_FILE')
 new_data = os.getenv('NEW_DATA')
+train_data = os.getenv('TRAIN_DATA')
 
 data = pd.read_excel(path)
 
@@ -20,7 +22,7 @@ if not os.path.exists(results_dir):
 # 1st step
 def remove_columns(original_dataset):
     df = pd.read_excel(original_dataset)
-    df = df.drop(df.columns[[0, 1, -1]], axis=1)
+    df = df.drop(df.columns[[0, 1]], axis=1)
     df.to_excel(new_data, index=False)
 
     # once the removal is done, return a new file in xlsx format
@@ -128,16 +130,19 @@ def transform_race_column(df):
     # drop the original 'Race' column
     df = df.drop(columns=['Race'])
 
-    # reorder columns, placing 'Numerical Race' and 'Race Description' at the end
-    other_columns = [col for col in df.columns if col not in ['Numerical Race', 'Race Description']]
-    df = df[other_columns + ['Numerical Race', 'Race Description']]
+    # reorder columns, placing 'Numerical Race', 'Race Description', 'Plus' at the end
+    end_columns = ['Plus', 'Numerical Race', 'Race Description']
+    other_columns = [col for col in df.columns if col not in end_columns]
+    # reorder the DataFrame
+    df = df[other_columns + end_columns]
 
     print("Race column successfully transformed.")
-
     return df  # Return the modified DataFrame
+
 
 # the complete 'script' function
 def clean_data(original_data=path):
+    print_fixed_length_message('Starting the script that cleans the data')
 
     print_fixed_length_message('Removing the redundant columns')
     df = remove_columns(original_data)
@@ -159,7 +164,7 @@ def clean_data(original_data=path):
 
     print_fixed_length_message('Starting to convert entries to a numerical representation')
 
-    print_fixed_length_message("Converting 'Place of living' ")
+    print_fixed_length_message("Converting 'Place of living'")
     transform_place_of_living(df)
 
     print_fixed_length_message("Converting 'Sex' ")
@@ -168,16 +173,127 @@ def clean_data(original_data=path):
     print_fixed_length_message("Converting 'Area'")
     transform_area_column(df)
 
-    print_fixed_length_message("Converting 'Number of cats' column")
+    print_fixed_length_message("Converting 'Number of cats'")
     transform_number_of_cats_column(df)
 
-    print_fixed_length_message("Converting 'Age' column")
+    print_fixed_length_message("Converting 'Age'")
     transform_age_column(df)
 
     print_fixed_length_message("Finally, converting 'Race' to a numerical representation")
     transform_race_column(df)
-
     df = df.drop(columns=['Race'])
-    print_fixed_length_message('Done')
+
+    print_fixed_length_message("Getting the cleaned data for training")
+    get_train_data()
+
+    print_fixed_length_message("The script that cleans the dats is officially Done")
 
     return df
+
+
+def get_train_data():
+    if os.path.exists(train_data):
+        df = pd.read_excel(train_data)
+        print("Training data loaded from existing file.")
+        return df
+
+    df = pd.read_excel(new_data)
+
+    # drop the 'Plus' column
+    df = df.drop(columns=['Plus'])
+
+    df.to_excel(train_data, index=False)
+    print(f"Training data saved to {train_data}")
+    return df
+
+def add_synthetic_data():
+    df = pd.read_excel(train_data).drop(columns=['Race Description'])
+
+    # Separate features and target labels
+    X = df.drop(columns=['Numerical Race'])
+    y = df['Numerical Race']
+
+    # Set target count for each class
+    target_count = 1020
+
+    # Create a dictionary for the sampling strategy, setting each class to the target count
+    sampling_strategy = {label: target_count for label in y.unique()}
+
+    # Initialize SMOTE with the custom sampling strategy
+    smote = SMOTE(sampling_strategy=sampling_strategy, random_state=42)
+
+    # Apply SMOTE to the entire dataset
+    X_resampled, y_resampled = smote.fit_resample(X, y)
+
+    breed_mapping = {
+        0: 'Birman', 1: 'European', 2: 'No breed', 3: 'Maine coon', 4: 'Bengal',
+        5: 'Persian', 6: 'Oriental', 7: 'British Shorthair', 8: 'Other',
+        9: 'Chartreux', 10: 'Ragdoll', 11: 'Turkish angora', 12: 'Sphynx', 13: 'Savannah'
+    }
+
+    # Map the resampled numerical labels back to breed names
+    race_description_resampled = [breed_mapping[label] for label in y_resampled]
+
+    # Combine the features and labels back into a single DataFrame
+    df_resampled = pd.DataFrame(X_resampled, columns=X.columns)
+    df_resampled['Numerical Race'] = y_resampled
+    df_resampled['Race Description'] = race_description_resampled  # Add the Race Description column
+
+    # Shuffle the resulting DataFrame
+    df_resampled = df_resampled.sample(frac=1, random_state=42).reset_index(drop=True)
+
+    # Save the resampled DataFrame to a new Excel file
+    df_resampled.to_excel("balanced_train_data.xlsx", index=False)
+
+    # Print out the new instance count per breed to confirm balancing
+    print(df_resampled['Numerical Race'].value_counts())
+
+def get_loaders(file_path):
+    """
+    :param file_path: where the training data is located
+    :return: X_train, y_train, X_val, y_val and Race Description (in string representation)
+    """
+
+    df = pd.read_excel(file_path)
+
+    # there are no missing values in important columns
+    if df[['Numerical Race', 'Race Description']].isnull().any().any():
+        print("Warning: Missing values found in 'Numerical Race' or 'Race Description' columns.")
+
+    # randomize data
+    shuffled_df = df.sample(frac=1).reset_index(drop=True)
+
+    print(f"Total instances in data: {len(df)}")
+
+    # training and validation sets
+    train_size = int(0.8 * len(shuffled_df))
+    train_df = shuffled_df[:train_size]
+    val_df = shuffled_df[train_size:]
+
+    # drop target columns to create feature matrix
+    if 'Numerical Race' in train_df.columns and 'Race Description' in train_df.columns:
+        X_train = train_df.drop(columns=['Numerical Race', 'Race Description'])
+        X_val = val_df.drop(columns=['Numerical Race', 'Race Description'])
+    else:
+        print("Error: Columns 'Numerical Race' or 'Race Description' not found in data.")
+        return None
+
+    # target variables
+    y_train = train_df['Numerical Race']
+    y_val = val_df['Numerical Race']
+
+    # additional description data
+    race_desc_train = train_df['Race Description']
+    race_desc_val = val_df['Race Description']
+
+    # print info
+    print("Training data shape (X):", X_train.shape)
+    print("Validation data shape (X):", X_val.shape)
+    print("Training data shape (y):", y_train.shape)
+    print("Validation data shape (y):", y_val.shape)
+
+    # check inconsitencies
+    if len(X_train) + len(X_val) != len(df):
+        print("Warning: Mismatch in row counts between training, validation, and original data.")
+
+    return X_train, y_train, X_val, y_val, race_desc_train, race_desc_val

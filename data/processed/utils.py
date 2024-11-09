@@ -18,6 +18,7 @@ def print_fixed_length_message(message, total_length=63):
     dots = '.' * dots_needed
     print(f"{message}{dots}")
 
+# age mapping max will be 12, so values aren't too sparse
 def map_age(age: float):
     if isinstance(age, (int, float)):
         return age
@@ -29,22 +30,23 @@ def map_age(age: float):
     elif age == '2-10 years':
         return 6
     elif age == 'More than 10':
-        return 15
+        return 12
 
 def map_area(designated_area):
     if isinstance(designated_area, int):
         return designated_area
 
     if designated_area == 'U':
-        return 1
+        return 0
     elif designated_area == 'R':
-        return 2
+        return 1
     elif designated_area == 'PU':
-        return 3
+        return 2
 
 def map_cats(number_of_cats):
     return 6 if number_of_cats == 'Over 5' else int(number_of_cats)
 
+# now mapping starts from 1
 def map_sex(sex):
     if sex == 'F':
         return 0
@@ -55,12 +57,12 @@ def map_sex(sex):
 
 def map_place_of_living(place):
     if place == "ASB":
-        return 1
+        return 0
     elif place == "AAB":
-        return 2
+        return 1
     elif place == "ML":
-        return 3
+        return 2
     elif place == "MI":
-        return 4
+        return 3
     else:
         return place

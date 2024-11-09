@@ -1,0 +1,5 @@
+input_size: 25
+hidden_size: 512
+output_size: 14
+learning_rate: 0.001
+batch_size: 32

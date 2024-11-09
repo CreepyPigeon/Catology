@@ -4,5 +4,7 @@ seaborn~=0.13.2
 openpyxl
 numpy~=1.26.4
 scikit-learn~=1.5.1
-imblearn~=0.0
 python-dotenv~=1.0.1
+PyYAML~=6.0.1
+imblearn~=0.0
+torch~=2.3.1

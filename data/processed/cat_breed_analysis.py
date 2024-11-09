@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from data_processing import clean_data
 
 load_dotenv()
-path = os.getenv('FILE_PATH')
+file_path = os.getenv('FILE_PATH')
 results_dir = os.getenv('RESULTS_DIR')
 errors_file = os.getenv('ERRORS_FILE')
 new_data = os.getenv('NEW_DATA')
@@ -71,11 +71,11 @@ class CatBreedAnalyzer:
         plt.close()
 
     def plot_columns(self):
-        # all columns except the last one
-        columns_to_plot = self.data.columns[:-1]
+        # all columns except the last two
+        columns_to_plot = self.data.columns[:-2]
 
         output_dir = results_dir
-        os.makedirs(output_dir, exist_ok=True)  # Create the directory if it doesn't exist
+        os.makedirs(output_dir, exist_ok=True)  # create the directory if it doesn't exist
 
         for column in columns_to_plot:
             # some columns contain white blanks in their name
@@ -88,21 +88,21 @@ class CatBreedAnalyzer:
                 print(f"Skipping non-numeric column: {column}")
                 continue
 
-            # Check if the column is numeric after conversion
+            # check if the column is numeric after conversion
             if not pd.api.types.is_numeric_dtype(self.data[column]):
                 print(f"Skipping non-numeric column: {column}")
                 continue
 
             plt.figure(figsize=(12, 5))
 
-            # Histogram
+            # histogram
             plt.subplot(1, 2, 1)  # 1 row, 2 columns, 1st plot
             plt.hist(self.data[column], bins=30, color='skyblue', edgecolor='black')
             plt.title(f'Histogram of {column}')
             plt.xlabel(column)
             plt.ylabel('Frequency')
 
-            # Boxplot
+            # boxplot
             plt.subplot(1, 2, 2)  # 1 row, 2 columns, 2nd plot
             plt.boxplot(self.data[column], vert=False)
             plt.title(f'Boxplot of {column}')
@@ -123,7 +123,7 @@ class CatBreedAnalyzer:
             plt.savefig(histogram_file)
             plt.savefig(boxplot_file)
 
-            plt.close()  # Close the plot to free up memory
+            plt.close()
 
         print("Plots saved successfully in:", output_dir)
 
@@ -143,25 +143,23 @@ class CatBreedAnalyzer:
     nature more clearly than a histogram might.
     """
 
-    # trebuie si asta pusa in directory-ul de rezultate
     def visualize_distribution(self, column):
         if column not in self.data.columns:
             print(f"Column '{column}' does not exist in the data.")
             return
 
         plt.figure(figsize=(10, 6))
-        sns.histplot(self.data[column], bins=30, kde=True)  # Create a histogram with KDE
+        sns.histplot(self.data[column], bins=30, kde=True)
         plt.title(f"Histogram of {column}")
         plt.xlabel(column)
         plt.ylabel('Frequency')
         plt.show()
 
-    # the correlation matrix still needs work
     def build_correlation_matrix(self):
 
-        os.makedirs(results_dir, exist_ok=True)  # Create the directory if it doesn't exist
+        os.makedirs(results_dir, exist_ok=True)  # create the directory if it doesn't exist
 
-        # Select only numerical columns (e.g., float, int) and exclude non-numerical columns like 'Race Description'
+        # select only numerical columns (e.g., float, int) and exclude non-numerical columns like 'Race Description'
         numerical_data = self.data.select_dtypes(include=[float, int])
 
         # Check if any numerical columns are available
@@ -169,36 +167,33 @@ class CatBreedAnalyzer:
             print("No numerical columns found to compute correlation matrix.")
             return
 
-        # Compute the correlation matrix
+        # compute the correlation matrix
         correlation_matrix = numerical_data.corr()
 
         plt.figure(figsize=(12, 8))
 
-        # Heatmap with the correlation matrix
+        # heatmap with the correlation matrix
         sns.heatmap(correlation_matrix, annot=True, fmt=".2f", cmap='coolwarm', square=True, cbar_kws={"shrink": .8})
 
         plt.title('Correlation Matrix')
-        plt.xticks(rotation=45)
-        plt.yticks(rotation=45)
 
-        # Save the correlation matrix as an image
+        # save as an image
         correlation_matrix_file = os.path.join(results_dir, 'correlation_matrix.png')
         plt.savefig(correlation_matrix_file)
-        plt.close()  # Close the plot to free up memory
+        plt.close()
 
         print("Correlation matrix saved successfully in:", results_dir)
 
 
 if __name__ == "__main__":
-    # mai trebuie testat ca am push pasii in ordinea corecta si ca totul merge
 
-    original_dataset = 'Translated_Cat_Dataset.xlsx'
+    original_dataset = file_path
     modified_dataset = new_data
 
     # get the full path based on the current working directory
-    full_file_path = os.path.join(os.getcwd(), original_dataset)
+    full_file_path = file_path
 
-    # instantiate the analyzer only if the file does not exist
+    # instantiate the analyser only if the file does not exist
     if not os.path.isfile(full_file_path):
         analyzer = CatBreedAnalyzer(full_file_path)
         print("Analyzer successfully instantiated")
@@ -206,8 +201,8 @@ if __name__ == "__main__":
         print(f"{full_file_path} already exists. Analyzer not instantiated.")
         analyzer = CatBreedAnalyzer(full_file_path, modified_dataset)
 
-    analyzer.build_correlation_matrix()
-    analyzer.plot_columns()
+    # analyzer.build_correlation_matrix()
+    # analyzer.plot_columns()
 
     print('Now showing instances per breed')
     analyzer.count_and_show_instances_per_breed()
