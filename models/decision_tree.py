@@ -1,13 +1,21 @@
+import numpy as np
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import accuracy_score, classification_report
-import pandas as pd
-from data.processed.data_processing import get_loaders
 
+from data.processed.data_processing import split_data, load_data
 
 if __name__ == '__main__':
     file_path = "balanced_train_data.xlsx"  # Replace with the actual path
-    X_train, y_train, X_val, y_val, race_desc_train, race_desc_val = get_loaders(file_path)
+    X, y, race_desc = load_data(file_path)
+
+    X = np.array(X)
+    y = np.array(y)
+
+    X_train, y_train, X_val, y_val = split_data(X, y, method='train_test')
+    X_train = np.array(X_train)
+    y_train = np.array(y_train)
+    X_val = np.array(X_val)
+    y_val = np.array(y_val)
 
     random_forest = RandomForestClassifier(n_estimators=100, random_state=42)  # 100 trees by default
 
@@ -22,5 +30,5 @@ if __name__ == '__main__':
     print(f"Validation Accuracy: {accuracy * 100:.2f}%")
 
     # Classification Report
-    print("Classification Report:")
-    print(classification_report(y_val, y_val_pred, target_names=race_desc_val.unique()))
+    # print("Classification Report:")
+    # print(classification_report(y_val, y_val_pred, target_names=np.unique(y)))

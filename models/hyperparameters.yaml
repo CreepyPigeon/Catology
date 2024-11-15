@@ -1,5 +1,6 @@
+epochs: 10
 input_size: 25
-hidden_size: 512
+hidden_size: 64
 output_size: 14
-learning_rate: 0.001
+learning_rate: 0.05
 batch_size: 32

@@ -3,6 +3,8 @@ import numpy as np
 import pandas as pd
 from dotenv import load_dotenv
 from imblearn.over_sampling import SMOTE
+from sklearn.model_selection import KFold
+
 from data.processed.utils import print_fixed_length_message, save_to_excel, map_age, map_area, map_cats, map_sex, \
     map_place_of_living, write_errors
 
@@ -248,52 +250,43 @@ def add_synthetic_data():
     # Print out the new instance count per breed to confirm balancing
     print(df_resampled['Numerical Race'].value_counts())
 
-def get_loaders(file_path):
-    """
-    :param file_path: where the training data is located
-    :return: X_train, y_train, X_val, y_val and Race Description (in string representation)
-    """
+def load_data(file_path):
 
     df = pd.read_excel(file_path)
 
-    # there are no missing values in important columns
+    # Check for missing values in important columns
     if df[['Numerical Race', 'Race Description']].isnull().any().any():
         print("Warning: Missing values found in 'Numerical Race' or 'Race Description' columns.")
 
-    # randomize data
-    shuffled_df = df.sample(frac=1).reset_index(drop=True)
+    # randomization
+    df = df.sample(frac=1, random_state=42).reset_index(drop=True)
 
     print(f"Total instances in data: {len(df)}")
 
-    # training and validation sets
-    train_size = int(0.8 * len(shuffled_df))
-    train_df = shuffled_df[:train_size]
-    val_df = shuffled_df[train_size:]
-
-    # drop target columns to create feature matrix
-    if 'Numerical Race' in train_df.columns and 'Race Description' in train_df.columns:
-        X_train = train_df.drop(columns=['Numerical Race', 'Race Description'])
-        X_val = val_df.drop(columns=['Numerical Race', 'Race Description'])
+    # separate features and target variables
+    if 'Numerical Race' in df.columns and 'Race Description' in df.columns:
+        X = df.drop(columns=['Numerical Race', 'Race Description'])
+        y = df['Numerical Race']
+        race_desc = df['Race Description']
     else:
-        print("Error: Columns 'Numerical Race' or 'Race Description' not found in data.")
-        return None
+        raise ValueError("Columns 'Numerical Race' or 'Race Description' not found in data.")
 
-    # target variables
-    y_train = train_df['Numerical Race']
-    y_val = val_df['Numerical Race']
+    print("Data shape (X):", X.shape)
+    print("Data shape (y):", y.shape)
 
-    # additional description data
-    race_desc_train = train_df['Race Description']
-    race_desc_val = val_df['Race Description']
+    return X, y, race_desc
 
-    # print info
-    print("Training data shape (X):", X_train.shape)
-    print("Validation data shape (X):", X_val.shape)
-    print("Training data shape (y):", y_train.shape)
-    print("Validation data shape (y):", y_val.shape)
+def split_data(X, y, method="train_test", num_folds=5):
+    if method == "train_test":
+        # 80-20 split
+        train_size = int(0.8 * len(X))
+        X_train, X_val = X[:train_size], X[train_size:]
+        y_train, y_val = y[:train_size], y[train_size:]
+        return X_train, y_train, X_val, y_val
 
-    # check inconsitencies
-    if len(X_train) + len(X_val) != len(df):
-        print("Warning: Mismatch in row counts between training, validation, and original data.")
+    elif method == "cross_validation":
+        kf = KFold(n_splits=num_folds, shuffle=True, random_state=42)
+        return kf.split(X)
 
-    return X_train, y_train, X_val, y_val, race_desc_train, race_desc_val
+    else:
+        raise ValueError("Invalid splitting method. Choose 'train_test' or 'cross_validation'.")

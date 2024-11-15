@@ -1,5 +1,7 @@
 import numpy as np
 
+from models.plot_utils import plot_and_save_loss
+
 
 # ReLU activation and its derivative
 def relu(z):
@@ -22,21 +24,21 @@ def cross_entropy_loss(y_true, y_pred):
 
 
 class NeuralNetwork:
-    def __init__(self, input_size, hidden_size, output_size, learning_rate=0.001, dropout_rate=0.5):
+    def __init__(self, input_size, hidden_size, output_size, learning_rate=0.001, dropout_rate=0.005):
         self.learning_rate = learning_rate
         self.dropout_rate = dropout_rate  # Fraction of neurons to drop during training
 
-        # Random initialization in the range [-1, 1]
+        # He initialization (Normal distribution with mean 0 and stddev = sqrt(2 / fan_in))
         # Layer 1 (input to hidden layer 1)
-        self.W1 = np.random.uniform(-1, 1, (input_size, hidden_size))  # Random initialization in [-1, 1]
+        self.W1 = np.random.randn(input_size, hidden_size) * np.sqrt(2. / input_size)  # He initialization
         self.b1 = np.zeros((1, hidden_size))  # Bias for hidden layer 1
 
         # Layer 2 (hidden layer 1 to hidden layer 2)
-        self.W2 = np.random.uniform(-1, 1, (hidden_size, hidden_size))  # Random initialization in [-1, 1]
+        self.W2 = np.random.randn(hidden_size, hidden_size) * np.sqrt(2. / hidden_size)  # He initialization
         self.b2 = np.zeros((1, hidden_size))  # Bias for hidden layer 2
 
         # Layer 3 (hidden layer 2 to output)
-        self.W3 = np.random.uniform(-1, 1, (hidden_size, output_size))  # Random initialization in [-1, 1]
+        self.W3 = np.random.randn(hidden_size, output_size) * np.sqrt(2. / hidden_size)  # He initialization
         self.b3 = np.zeros((1, output_size))  # Bias for output layer
 
         # Initialization of activations and pre-activations
@@ -51,10 +53,8 @@ class NeuralNetwork:
         np.savez(filename, W1=self.W1, b1=self.b1,
                  W2=self.W2, b2=self.b2,
                  W3=self.W3, b3=self.b3)
-        print("Weights saved to", filename)
 
     def load_weights(self, filename):
-        # Load weights and biases from a file
         data = np.load(filename)
         self.W1 = data['W1']
         self.b1 = data['b1']
@@ -62,7 +62,6 @@ class NeuralNetwork:
         self.b2 = data['b2']
         self.W3 = data['W3']
         self.b3 = data['b3']
-        print("Weights loaded from", filename)
 
     def forward(self, X, training=True):
         # Layer 1 (input to first hidden layer)
@@ -123,7 +122,9 @@ class NeuralNetwork:
         self.b1 -= self.learning_rate * db1
 
     # Training function with batch training
-    def train(self, X, y, epochs, batch_size, lambda_reg=0.01):
+    def train(self, X, y, epochs, batch_size, save_path=None, lambda_reg=0.001):
+        epoch_losses = []  # List to store loss per epoch
+
         for epoch in range(epochs):
             # Shuffle the data at the start of each epoch
             indices = np.arange(X.shape[0])
@@ -144,7 +145,15 @@ class NeuralNetwork:
             # Calculate loss for the full dataset (optional, for monitoring)
             y_pred = self.forward(X)
             loss = cross_entropy_loss(y, y_pred)  # Pass only y and y_pred
+
+            # Store the loss for the current epoch
+            epoch_losses.append(loss)
+
             print(f"Epoch {epoch + 1}/{epochs}, Loss: {loss:.4f}")
+
+        if save_path:
+            plot_and_save_loss(epoch_losses, save_path)
+        return epoch_losses
 
     def predict(self, X):
         y_pred = self.forward(X)
