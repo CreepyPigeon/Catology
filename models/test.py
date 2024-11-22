@@ -1,8 +1,6 @@
 import os
 import dotenv
 import numpy as np
-
-from data.processed.data_processing import load_data
 from models.architecture import NeuralNetwork
 
 from sklearn.model_selection import KFold
@@ -40,9 +38,9 @@ def cross_validate(model_class, X, y, num_folds=5, weights_file='trained_weights
         fold += 1
         print(f"Evaluating fold {fold}...")
 
-        # Split the data into train and validation sets for this fold
-        X_train, X_val = X.iloc[train_index], X.iloc[val_index]  # Use iloc to index by rows
-        y_train, y_val = y.iloc[train_index], y.iloc[val_index]  # Same for labels
+        # split the data into train and validation sets for this fold
+        X_train, X_val = X.iloc[train_index], X.iloc[val_index]
+        y_train, y_val = y.iloc[train_index], y.iloc[val_index]
 
         # Here, you could optionally train the model using the training data (not shown here)
         # But, for evaluation, we are assuming the weights have already been trained and saved to 'trained_weights.npz'
@@ -62,14 +60,13 @@ def check_prediction(model, X_input, y_input, weights_file):
     # Print the raw output (before applying np.argmax)
     print(f"Raw output (logits) for the input: {raw_output}")
 
-    # Get the model's prediction (class with highest probability)
+    # model's prediction (class with the highest probability)
     prediction = np.argmax(raw_output, axis=1)
 
     # Print the prediction and compare with the true value
     # print(f"Predicted class: {prediction[0]}, True class: {y_input}")
 
-    # Check if the prediction matches the true class
-    print(f"Prediciton {prediction[0]}")
+    print(f"Prediction {prediction[0]}")
     if prediction[0] == y_input:
         print(f"Prediction is correct!")
     else:
@@ -79,12 +76,12 @@ def check_prediction(model, X_input, y_input, weights_file):
 if __name__ == '__main__':
     file_path = train_data
 
-    epochs, input_size, hidden_size, output_size, learning_rate, batch_size = import_hyperparameters()
-    nn = NeuralNetwork(input_size=input_size, hidden_size=hidden_size, output_size=output_size,
-                       learning_rate=learning_rate)
+    i_epochs, i_input_size, i_hidden_size, i_output_size, i_learning_rate, i_batch_size = import_hyperparameters()
+    nn = NeuralNetwork(input_size=i_input_size, hidden_size=i_hidden_size, output_size=i_output_size,
+                       learning_rate=i_learning_rate)
 
     weights = 'trained_weights.npz'
-    X_input = np.array(
+    X_in = np.array(
         [1, 1.5, 2, 2, 1, 0, 2, 3, 4, 1, 4, 4, 4, 5, 4, 3, 1, 1, 1, 1, 4, 1, 2, 0, 0])
     y_out = 7
-    check_prediction(nn, X_input, y_out, weights)
+    check_prediction(nn, X_in, y_out, weights)

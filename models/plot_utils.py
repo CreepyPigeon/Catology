@@ -20,6 +20,21 @@ def plot_fold_accuracy(accuracies, save_path):
     plt.savefig(save_path)
     plt.close()
 
+# fold accuracies altogether
+def plot_all_folds(fold_accuracies, plot_folder):
+    plt.figure(figsize=(10, 6))
+    for i, accuracies in enumerate(fold_accuracies):
+        plt.plot(accuracies, label=f'Fold {i + 1}')
+    plt.title('Validation Accuracy Across Folds')
+    plt.xlabel('Epochs')
+    plt.ylabel('Validation Accuracy')
+    plt.legend()
+    plt.grid(True)
+
+    combined_plot_path = os.path.join(plot_folder, 'all_folds_accuracy.png')
+    plt.savefig(combined_plot_path)
+    print(f"Combined accuracy plot saved at: {combined_plot_path}")
+    plt.show()
 
 def plot_convergence_accuracy(accuracies, save_path):
     """
@@ -38,65 +53,6 @@ def plot_convergence_accuracy(accuracies, save_path):
     plt.title('Cross-validation Accuracy per Epoch')
     plt.legend()
     plt.savefig(save_path)
-    plt.close()
-
-def plot_fold_loss(training_loss, validation_loss, save_path):
-    """
-    Plot the training and validation loss for a single fold and save it to a file.
-
-    Arguments:
-    - training_loss: List of training loss values
-    - validation_loss: List of validation loss values
-    - save_path: Path where to save the plot
-
-    Returns:
-    - None
-    """
-    plt.figure(figsize=(10, 6))
-    plt.plot(training_loss, label='Training Loss', color='blue')
-    plt.plot(validation_loss, label='Validation Loss', color='red')
-    plt.xlabel('Epochs')
-    plt.ylabel('Loss')
-    plt.title('Training and Validation Loss (Fold)')
-    plt.legend()
-    plt.savefig(save_path)
-    plt.close()
-
-def plot_convergence(training_losses, validation_losses, epochs, save_path=None):
-    """
-    Plot the training and validation loss curves.
-
-    Arguments:
-    - training_losses: List of lists containing training loss per fold
-    - validation_losses: List of lists containing validation loss per fold
-    - epochs: Number of epochs
-    - save_path: Path to save the plot image (optional)
-
-    Returns:
-    - None
-    """
-    plt.figure(figsize=(10, 6))
-
-    # Plot training loss for each fold
-    for i, fold_loss in enumerate(training_losses):
-        plt.plot(range(epochs), fold_loss, label=f"Train Fold {i + 1}")
-
-    # Plot validation loss for each fold
-    for i, fold_loss in enumerate(validation_losses):
-        plt.plot(range(epochs), fold_loss, label=f"Val Fold {i + 1}", linestyle='--')
-
-    plt.title("Training and Validation Loss per Epoch (Cross-validation)")
-    plt.xlabel("Epoch")
-    plt.ylabel("Loss")
-    plt.legend()
-
-    # Save the plot if save_path is provided
-    if save_path:
-        plt.savefig(save_path)
-        print(f"Loss plot saved as {save_path}")
-    else:
-        plt.show()  # If no save path, just display the plot
-
     plt.close()
 
 def plot_and_save_loss(epoch_losses, save_path='loss_curve.png'):

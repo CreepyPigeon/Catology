@@ -1,5 +1,4 @@
 import numpy as np
-
 from models.plot_utils import plot_and_save_loss
 
 
@@ -18,7 +17,7 @@ def softmax(z):
 
 def cross_entropy_loss(y_true, y_pred):
     m = y_true.shape[0]
-    log_likelihood = -np.log(y_pred[range(m), y_true])  # Assuming y_true is integer labels
+    log_likelihood = -np.log(y_pred[range(m), y_true])
     loss = np.sum(log_likelihood) / m
     return loss
 
@@ -26,20 +25,21 @@ def cross_entropy_loss(y_true, y_pred):
 class NeuralNetwork:
     def __init__(self, input_size, hidden_size, output_size, learning_rate=0.001, dropout_rate=0.005):
         self.learning_rate = learning_rate
-        self.dropout_rate = dropout_rate  # Fraction of neurons to drop during training
+        self.dropout_rate = dropout_rate
 
         # He initialization (Normal distribution with mean 0 and stddev = sqrt(2 / fan_in))
+
         # Layer 1 (input to hidden layer 1)
-        self.W1 = np.random.randn(input_size, hidden_size) * np.sqrt(2. / input_size)  # He initialization
-        self.b1 = np.zeros((1, hidden_size))  # Bias for hidden layer 1
+        self.W1 = np.random.randn(input_size, hidden_size) * np.sqrt(2. / input_size)
+        self.b1 = np.zeros((1, hidden_size))
 
         # Layer 2 (hidden layer 1 to hidden layer 2)
-        self.W2 = np.random.randn(hidden_size, hidden_size) * np.sqrt(2. / hidden_size)  # He initialization
-        self.b2 = np.zeros((1, hidden_size))  # Bias for hidden layer 2
+        self.W2 = np.random.randn(hidden_size, hidden_size) * np.sqrt(2. / hidden_size)
+        self.b2 = np.zeros((1, hidden_size))
 
         # Layer 3 (hidden layer 2 to output)
-        self.W3 = np.random.randn(hidden_size, output_size) * np.sqrt(2. / hidden_size)  # He initialization
-        self.b3 = np.zeros((1, output_size))  # Bias for output layer
+        self.W3 = np.random.randn(hidden_size, output_size) * np.sqrt(2. / hidden_size)
+        self.b3 = np.zeros((1, output_size))
 
         # Initialization of activations and pre-activations
         self.Z1 = None
@@ -87,33 +87,32 @@ class NeuralNetwork:
         return self.A3
 
     def dropout(self, A):
-        # Dropout implementation
-        mask = np.random.rand(*A.shape) < (1 - self.dropout_rate)  # Mask with 0's and 1's
+        mask = np.random.rand(*A.shape) < (1 - self.dropout_rate)
         return A * mask  # Element-wise multiplication with mask
 
     def backward(self, X, y, lambda_reg=0.01):
         m = y.shape[0]
 
-        # Output layer gradient
+        # output layer gradient
         one_hot_y = np.zeros_like(self.A3)
         one_hot_y[np.arange(m), y] = 1
         dZ3 = self.A3 - one_hot_y
         dW3 = (1 / m) * self.A2.T.dot(dZ3) + lambda_reg * self.W3  # Add weight decay to gradient
         db3 = (1 / m) * np.sum(dZ3, axis=0, keepdims=True)
 
-        # Hidden layer 2 gradient
+        # hidden layer 2 gradient
         dA2 = dZ3.dot(self.W3.T)
         dZ2 = dA2 * relu_derivative(self.Z2)
         dW2 = (1 / m) * self.A1.T.dot(dZ2) + lambda_reg * self.W2  # Add weight decay to gradient
         db2 = (1 / m) * np.sum(dZ2, axis=0, keepdims=True)
 
-        # Hidden layer 1 gradient
+        # hidden layer 1 gradient
         dA1 = dZ2.dot(self.W2.T)
         dZ1 = dA1 * relu_derivative(self.Z1)
         dW1 = (1 / m) * X.T.dot(dZ1) + lambda_reg * self.W1  # Add weight decay to gradient
         db1 = (1 / m) * np.sum(dZ1, axis=0, keepdims=True)
 
-        # Update weights and biases with regularization
+        # update weights and biases with regularization
         self.W3 -= self.learning_rate * dW3
         self.b3 -= self.learning_rate * db3
         self.W2 -= self.learning_rate * dW2
@@ -121,35 +120,29 @@ class NeuralNetwork:
         self.W1 -= self.learning_rate * dW1
         self.b1 -= self.learning_rate * db1
 
-    # Training function with batch training
+    # training function with mini-batch training
     def train(self, X, y, epochs, batch_size, save_path=None, lambda_reg=0.001):
-        epoch_losses = []  # List to store loss per epoch
+        epoch_losses = []
 
         for epoch in range(epochs):
-            # Shuffle the data at the start of each epoch
+            # shuffle the data at the start of each epoch
             indices = np.arange(X.shape[0])
             np.random.shuffle(indices)
             X = X[indices]
             y = y[indices]
 
-            # Process each batch
             for i in range(0, X.shape[0], batch_size):
                 X_batch = X[i:i + batch_size]
                 y_batch = y[i:i + batch_size]
 
-                # Forward pass
                 self.forward(X_batch)
-                # Backward pass
                 self.backward(X_batch, y_batch, lambda_reg=lambda_reg)
 
-            # Calculate loss for the full dataset (optional, for monitoring)
             y_pred = self.forward(X)
-            loss = cross_entropy_loss(y, y_pred)  # Pass only y and y_pred
+            loss = cross_entropy_loss(y, y_pred)
 
-            # Store the loss for the current epoch
+            # store the loss for the current epoch
             epoch_losses.append(loss)
-
-            print(f"Epoch {epoch + 1}/{epochs}, Loss: {loss:.4f}")
 
         if save_path:
             plot_and_save_loss(epoch_losses, save_path)

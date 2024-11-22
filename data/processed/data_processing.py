@@ -211,20 +211,18 @@ def get_train_data():
 def add_synthetic_data():
     df = pd.read_excel(train_data).drop(columns=['Race Description'])
 
-    # Separate features and target labels
+    # separate features and target labels
     X = df.drop(columns=['Numerical Race'])
     y = df['Numerical Race']
 
-    # Set target count for each class
+    # set target count for each class
     target_count = 1020
 
-    # Create a dictionary for the sampling strategy, setting each class to the target count
+    # the sampling strategy, setting each class to the target count
     sampling_strategy = {label: target_count for label in y.unique()}
 
-    # Initialize SMOTE with the custom sampling strategy
+    # initialize and apply SMOTE
     smote = SMOTE(sampling_strategy=sampling_strategy, random_state=42)
-
-    # Apply SMOTE to the entire dataset
     X_resampled, y_resampled = smote.fit_resample(X, y)
 
     breed_mapping = {
@@ -241,20 +239,18 @@ def add_synthetic_data():
     df_resampled['Numerical Race'] = y_resampled
     df_resampled['Race Description'] = race_description_resampled  # Add the Race Description column
 
-    # Shuffle the resulting DataFrame
+    # save and shuffle the resulting DataFrame
     df_resampled = df_resampled.sample(frac=1, random_state=42).reset_index(drop=True)
-
-    # Save the resampled DataFrame to a new Excel file
     df_resampled.to_excel("balanced_train_data.xlsx", index=False)
 
-    # Print out the new instance count per breed to confirm balancing
+    # confirm balancing
     print(df_resampled['Numerical Race'].value_counts())
 
 def load_data(file_path):
 
     df = pd.read_excel(file_path)
 
-    # Check for missing values in important columns
+    # aditional check
     if df[['Numerical Race', 'Race Description']].isnull().any().any():
         print("Warning: Missing values found in 'Numerical Race' or 'Race Description' columns.")
 
