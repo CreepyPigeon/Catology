@@ -2,16 +2,16 @@ import os
 import yaml
 import numpy as np
 from dotenv import load_dotenv
-from matplotlib import pyplot as plt
 from sklearn.model_selection import KFold
 from architecture import NeuralNetwork, cross_entropy_loss
 from data.processed.data_processing import load_data, split_data
-from models.plot_utils import plot_fold_accuracy, plot_all_folds
+from src.utils.plot_utils import plot_fold_accuracy, plot_all_folds
 
 load_dotenv()
 results_dir = os.getenv('RESULTS_DIR')
 errors_file = os.getenv('ERRORS_FILE')
 train_data = os.getenv('BALANCED_DATASET')
+weights_path = os.getenv('WEIGHTS')
 
 
 def normalize_data(X):
@@ -37,7 +37,7 @@ def import_hyperparameters():
     return epochs, input_size, hidden_size, output_size, learning_rate, batch_size
 
 
-def train(weights_file='trained_weights.npz', split_method='train_test', num_folds=5,
+def train(weights_file=weights_path, split_method='train_test', num_folds=5,
           save_path='training_loss_80/20.png'):
     """
     Train the model with specified data splitting method (train-test or cross-validation).
@@ -77,13 +77,13 @@ def train(weights_file='trained_weights.npz', split_method='train_test', num_fol
 
     # Cross-validation
     elif split_method == 'cross_validation':
-        return train_with_cross_validation(num_folds=num_folds, weights_file=weights_file, save_path=save_path)
+        return train_with_cross_validation(num_folds=num_folds, weights_file=weights_file)
 
     else:
         raise ValueError("Invalid split_method. Use 'train_test' or 'cross_validation'.")
 
 
-def evaluate_model(model, X_val, y_val, weights_file='trained_weights.npz', lambda_reg=0.01):
+def evaluate_model(model, X_val, y_val, weights_file=weights_path):
     """
     Evaluate the model on validation data by loading weights from the saved file.
     Arguments:
@@ -110,8 +110,7 @@ def evaluate_model(model, X_val, y_val, weights_file='trained_weights.npz', lamb
 
     return val_loss, accuracy
 
-def train_with_cross_validation(num_folds=5, weights_file='trained_weights.npz',
-                                save_path='cv_loss_plots/cross_val_loss_plot.png'):
+def train_with_cross_validation(num_folds=5, weights_file='trained_weights.npz'):
     """
     Train the model using cross-validation and save loss plots for each fold.
 
@@ -132,7 +131,7 @@ def train_with_cross_validation(num_folds=5, weights_file='trained_weights.npz',
 
     fold = 0
     fold_metrics = []
-    fold_accuracies = []  # Store accuracies for visualization
+    fold_accuracies = []
 
     # folder for saving plots if it doesn't exist
     plot_folder = 'cv_loss_plots'
@@ -158,26 +157,20 @@ def train_with_cross_validation(num_folds=5, weights_file='trained_weights.npz',
             val_loss, val_accuracy = evaluate_model(model, X_val, y_val)
             fold_training_accuracies.append(val_accuracy)
 
-            # print accuracy after each epoch
             print(f"Epoch {epoch + 1}/{epochs}, Validation Accuracy: {val_accuracy:.4f}")
-
-        # Store the fold accuracy for visualization
         fold_accuracies.append(fold_training_accuracies)
 
-        # Evaluate the model on the final validation set
+        # evaluate the model on the final validation set
         val_loss, val_accuracy = evaluate_model(model, X_val, y_val)
         print(f"Fold {fold} - Final Validation Loss: {val_loss:.4f}, Final Validation Accuracy: {val_accuracy:.4f}")
 
         fold_metrics.append((val_loss, val_accuracy))
-
-        # save weights after training
         model.save_weights(weights_file)
 
-        # Save plot for the fold after all epochs for that fold
         fold_save_path = os.path.join(plot_folder, f'fold_{fold}_accuracy.png')
         plot_fold_accuracy(fold_training_accuracies, fold_save_path)
 
-    # Compute average metrics across all folds
+    # average metrics across all folds
     avg_loss = np.mean([m[0] for m in fold_metrics])
     avg_accuracy = np.mean([m[1] for m in fold_metrics])
     print(f"Cross-Validation Completed. Average Loss: {avg_loss:.4f}, Average Accuracy: {avg_accuracy:.4f}")
@@ -188,4 +181,4 @@ def train_with_cross_validation(num_folds=5, weights_file='trained_weights.npz',
 if __name__ == '__main__':
     # train(weights_file='trained_weights.npz', split_method='train_test', save_path='training_loss_80_20.png')
 
-    train(weights_file='trained_weights.npz', split_method='cross_validation')
+    train(weights_file=weights_path, split_method='cross_validation')

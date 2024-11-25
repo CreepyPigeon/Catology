@@ -1,5 +1,5 @@
 import numpy as np
-from models.plot_utils import plot_and_save_loss
+from src.utils.plot_utils import plot_and_save_loss
 
 
 # ReLU activation and its derivative
@@ -64,31 +64,31 @@ class NeuralNetwork:
         self.b3 = data['b3']
 
     def forward(self, X, training=True):
-        # Layer 1 (input to first hidden layer)
+        # layer 1 (input to first hidden layer)
         self.Z1 = X.dot(self.W1) + self.b1
-        self.A1 = relu(self.Z1)  # ReLU activation for hidden layer 1
+        self.A1 = relu(self.Z1)
 
-        # Apply dropout after first hidden layer (only during training)
+        # dropout after first hidden layer (only during training)
         if training:
             self.A1 = self.dropout(self.A1)
 
-        # Layer 2 (first hidden layer to second hidden layer)
+        # layer 2 (first hidden layer to second hidden layer)
         self.Z2 = self.A1.dot(self.W2) + self.b2
-        self.A2 = relu(self.Z2)  # ReLU activation for hidden layer 2
+        self.A2 = relu(self.Z2)
 
-        # Apply dropout after second hidden layer (only during training)
+        # dropout after second hidden layer (only during training)
         if training:
             self.A2 = self.dropout(self.A2)
 
-        # Output layer (second hidden layer to output)
+        # output layer (second hidden layer to output)
         self.Z3 = self.A2.dot(self.W3) + self.b3
-        self.A3 = softmax(self.Z3)  # Softmax activation for output layer
+        self.A3 = softmax(self.Z3)
 
         return self.A3
 
     def dropout(self, A):
         mask = np.random.rand(*A.shape) < (1 - self.dropout_rate)
-        return A * mask  # Element-wise multiplication with mask
+        return A * mask
 
     def backward(self, X, y, lambda_reg=0.01):
         m = y.shape[0]
@@ -96,20 +96,25 @@ class NeuralNetwork:
         # output layer gradient
         one_hot_y = np.zeros_like(self.A3)
         one_hot_y[np.arange(m), y] = 1
-        dZ3 = self.A3 - one_hot_y
-        dW3 = (1 / m) * self.A2.T.dot(dZ3) + lambda_reg * self.W3  # Add weight decay to gradient
+        dZ3 = self.A3 - one_hot_y  # equivalent of (t_j - o_j)⋅ activation_derivative(o_j)
+        dW3 = (1 / m) * self.A2.T.dot(dZ3) + lambda_reg * self.W3  # add weight decay to gradient
         db3 = (1 / m) * np.sum(dZ3, axis=0, keepdims=True)
 
         # hidden layer 2 gradient
         dA2 = dZ3.dot(self.W3.T)
         dZ2 = dA2 * relu_derivative(self.Z2)
-        dW2 = (1 / m) * self.A1.T.dot(dZ2) + lambda_reg * self.W2  # Add weight decay to gradient
-        db2 = (1 / m) * np.sum(dZ2, axis=0, keepdims=True)
+        dW2 = (1 / m) * self.A1.T.dot(dZ2) + lambda_reg * self.W2  # add weight decay to gradient
+        db2 = (1 / m) * np.sum(dZ2, axis=0, keepdims=True)  # I take the average gradient
 
         # hidden layer 1 gradient
+        """
+        # equivalent of sum(delta_j * w_kj), 
+        where j is a neuron from a hidden layer,
+              k are all units from the next layer connected to j
+        """
         dA1 = dZ2.dot(self.W2.T)
         dZ1 = dA1 * relu_derivative(self.Z1)
-        dW1 = (1 / m) * X.T.dot(dZ1) + lambda_reg * self.W1  # Add weight decay to gradient
+        dW1 = (1 / m) * X.T.dot(dZ1) + lambda_reg * self.W1  # add weight decay to gradient
         db1 = (1 / m) * np.sum(dZ1, axis=0, keepdims=True)
 
         # update weights and biases with regularization

@@ -5,7 +5,7 @@ from sklearn.metrics import accuracy_score, classification_report
 from data.processed.data_processing import split_data, load_data
 
 if __name__ == '__main__':
-    file_path = "../data/processed/balanced_train_data.xlsx"
+    file_path = "../../data/processed/balanced_train_data.xlsx"
     X, y, race_desc = load_data(file_path)
 
     X = np.array(X)
