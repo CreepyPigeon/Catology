@@ -1,0 +1,75 @@
+/* Basic body styles */
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    background: linear-gradient(to bottom right, #c8cac6 50%, #5a9186 50%); /* Diagonal gradient */
+    height: 100vh; /* Make sure the background covers the entire viewport */
+}
+
+/* Center the image */
+#photoContainer {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%); /* Keep image centered initially */
+    cursor: pointer;
+    z-index: 10; /* Keep it above the chatbox */
+}
+
+/* Image styling */
+#photo {
+    width: 300px;
+    height: 300px;
+    border-radius: 10px;
+}
+
+/* Initially hide the chatbox */
+#chatbox {
+    display: none;
+    margin-top: 20px;
+}
+
+/* Slide effect for image */
+.slide-up {
+    animation: slideImageUp 1s forwards;
+}
+
+@keyframes slideImageUp {
+    from {
+        transform: translate(-50%, -50%); /* Keep the image centered initially */
+    }
+    to {
+        transform: translate(-50%, +450%); /* Move the image upwards */
+    }
+}
+
+/* Slide effect for chatbox */
+#chatbox.slide-up {
+    animation: slideChatUp 1s forwards;
+}
+
+@keyframes slideChatUp {
+    from {
+        transform: translateY(100%);
+    }
+    to {
+        transform: translateY(0);
+    }
+}
+
+/* Chat container styling */
+#chat {
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+#userInput {
+    width: 80%;
+    max-width: 500px;
+    padding: 10px;
+    border-radius: 5px;
+}

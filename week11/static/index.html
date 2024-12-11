@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CatGPT</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/x-icon" href="./static/Images/oglogo.png">
+</head>
+<body>
+
+    <!-- The image in the center -->
+    <div id="photoContainer" onclick="revealChat()">
+        <img id="photo" src="./static/Images/oglogo.png" alt="Click to chat">
+    </div>
+
+    <!-- Chatbox that will slide up -->
+    <div id="chatbox">
+        <div id="chat"></div>
+        <input id="userInput" type="text" placeholder="Type a message...">
+        <button onclick="sendMessage()">Send</button>
+    </div>
+
+    <script>
+        // Function to reveal the chatbox when the photo is clicked
+        function revealChat() {
+            document.getElementById('photoContainer').classList.add('slide-up'); // Slide image up
+            document.getElementById('chatbox').style.display = 'block'; // Show chatbox
+            document.getElementById('chatbox').classList.add('slide-up'); // Add slide-up effect to chatbox
+        }
+
+        // Function to send a message
+        async function sendMessage() {
+            const userInput = document.getElementById('userInput').value;
+            if (userInput.trim() === "") return; // Don't send if the input is empty
+            const response = await fetch('/chat', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({message: userInput})
+            });
+            const data = await response.json();
+            document.getElementById('chat').innerHTML += `<p><b>You:</b> ${userInput}</p><p><b>Bot:</b> ${data.response}</p>`;
+            document.getElementById('userInput').value = ""; // Clear the input field after sending
+        }
+
+        // Listen for Enter key to send the message
+        document.getElementById('userInput').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                sendMessage();
+            }
+        });
+    </script>
+
+</body>
+</html>
