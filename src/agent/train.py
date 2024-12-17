@@ -2,7 +2,9 @@ import os
 import yaml
 import numpy as np
 from dotenv import load_dotenv
+from matplotlib import pyplot as plt
 from sklearn.model_selection import KFold
+from sklearn.manifold import TSNE
 from architecture import NeuralNetwork, cross_entropy_loss
 from data.processed.data_processing import load_data, split_data
 from src.utils.plot_utils import plot_fold_accuracy, plot_all_folds
@@ -37,6 +39,48 @@ def import_hyperparameters():
     return epochs, input_size, hidden_size, output_size, learning_rate, batch_size
 
 
+def visualize_mismatches(model, X, y, weights_file):
+    """
+    Visualize mismatched instances using t-SNE.
+
+    Arguments:
+    - model: Trained model
+    - X: Validation features
+    - y: Validation labels
+    - weights_file: Path to model weights for predictions
+
+    Returns:
+    - None (displays a scatter plot)
+    """
+    # Load model weights (optional if already loaded)
+    model.load_weights(weights_file)
+
+    # Predict validation set
+    y_pred = model.predict(X)
+
+    # Identify mismatched instances
+    mismatches = y != y_pred
+    X_mismatched = X[mismatches]
+    y_true_mismatched = y[mismatches]
+    y_pred_mismatched = y_pred[mismatches]
+
+    # Apply t-SNE
+    tsne = TSNE(n_components=2, random_state=42)
+    X_tsne = tsne.fit_transform(X_mismatched)
+
+    # Scatter plot
+    plt.figure(figsize=(10, 8))
+    for true_label in np.unique(y_true_mismatched):
+        indices = (y_true_mismatched == true_label)
+        plt.scatter(X_tsne[indices, 0], X_tsne[indices, 1], label=f"True: {true_label}", alpha=0.6)
+
+    plt.scatter(X_tsne[:, 0], X_tsne[:, 1], c=y_pred_mismatched, cmap='coolwarm', marker='x', label='Predicted')
+    plt.title("t-SNE Visualization of Mismatched Instances")
+    plt.xlabel("t-SNE Dimension 1")
+    plt.ylabel("t-SNE Dimension 2")
+    plt.legend()
+    plt.show()
+
 def train(weights_file=weights_path, split_method='train_test', num_folds=5,
           save_path='training_loss_80/20.png'):
     """
@@ -67,12 +111,13 @@ def train(weights_file=weights_path, split_method='train_test', num_folds=5,
         # X_val = normalize_data(X_val)
 
         model = NeuralNetwork(input_size, hidden_size, output_size, learning_rate)
-        model.train(X_train, y_train, epochs=epochs, batch_size=batch_size, save_path=save_path)  # Save plot here
+        model.train(X_train, y_train, epochs=epochs, batch_size=batch_size, save_path=save_path)
         model.save_weights(weights_file)
 
         val_loss, val_accuracy = evaluate_model(model, X_val, y_val, weights_file=weights_file)
         print(f"Validation Loss: {val_loss:.4f}, Validation Accuracy: {val_accuracy:.4f}")
 
+        visualize_mismatches(model, X_val, y_val, weights_file)
         return model, X_val, y_val
 
     # Cross-validation
@@ -98,7 +143,7 @@ def evaluate_model(model, X_val, y_val, weights_file=weights_path):
     - val_accuracy: The accuracy for the validation set
     """
     # load the trained weights from the file
-    model.load_weights(weights_file)
+    # model.load_weights(weights_file)
 
     y_pred = model.forward(X_val)
 
@@ -127,7 +172,7 @@ def train_with_cross_validation(num_folds=5, weights_file='trained_weights.npz')
     y = np.array(y)
 
     epochs, input_size, hidden_size, output_size, learning_rate, batch_size = import_hyperparameters()
-    kf = KFold(n_splits=num_folds, shuffle=True, random_state=42)
+    kf = KFold(n_splits=num_folds)
 
     fold = 0
     fold_metrics = []
@@ -179,6 +224,7 @@ def train_with_cross_validation(num_folds=5, weights_file='trained_weights.npz')
 
 
 if __name__ == '__main__':
-    # train(weights_file='trained_weights.npz', split_method='train_test', save_path='training_loss_80_20.png')
+    train(weights_file='trained_weights.npz', split_method='train_test',
+          save_path='cv_loss_plots/training_loss_80_20.png')
 
-    train(weights_file=weights_path, split_method='cross_validation')
+    # train(weights_file=weights_path, split_method='cross_validation')

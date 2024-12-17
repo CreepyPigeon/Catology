@@ -90,31 +90,35 @@ class NeuralNetwork:
         mask = np.random.rand(*A.shape) < (1 - self.dropout_rate)
         return A * mask
 
-    def backward(self, X, y, lambda_reg=0.01):
+    def backward(self, X, y, lambda_reg):
         m = y.shape[0]
+
+        # err_out = derivative(activation_function) * (desired_output - actual_output)
+
+        # err_hidden = derivative(activation_function) * dot_product(error, next_layer_neurons)
+
+        # delta_w = eta * (err_hidden/err_out) * input_from_prev_neurons
 
         # output layer gradient
         one_hot_y = np.zeros_like(self.A3)
         one_hot_y[np.arange(m), y] = 1
         dZ3 = self.A3 - one_hot_y  # equivalent of (t_j - o_j)⋅ activation_derivative(o_j)
-        dW3 = (1 / m) * self.A2.T.dot(dZ3) + lambda_reg * self.W3  # add weight decay to gradient
+        dW3 = (1 / m) * self.A2.T.dot(dZ3) + lambda_reg * self.W3
         db3 = (1 / m) * np.sum(dZ3, axis=0, keepdims=True)
 
         # hidden layer 2 gradient
         dA2 = dZ3.dot(self.W3.T)
         dZ2 = dA2 * relu_derivative(self.Z2)
-        dW2 = (1 / m) * self.A1.T.dot(dZ2) + lambda_reg * self.W2  # add weight decay to gradient
+        dW2 = (1 / m) * self.A1.T.dot(dZ2) + lambda_reg * self.W2  # first hidden, so I multiply by the prev layer
         db2 = (1 / m) * np.sum(dZ2, axis=0, keepdims=True)  # I take the average gradient
 
         # hidden layer 1 gradient
-        """
-        # equivalent of sum(delta_j * w_kj), 
-        where j is a neuron from a hidden layer,
-              k are all units from the next layer connected to j
-        """
         dA1 = dZ2.dot(self.W2.T)
+        # equivalent of sum(delta_j * w_kj)
+        # where j is a neuron from a hidden layer and
+        # k are all units from the next layer connected to j
         dZ1 = dA1 * relu_derivative(self.Z1)
-        dW1 = (1 / m) * X.T.dot(dZ1) + lambda_reg * self.W1  # add weight decay to gradient
+        dW1 = (1 / m) * X.T.dot(dZ1) + lambda_reg * self.W1  # input layer, so I multiply by the actual input
         db1 = (1 / m) * np.sum(dZ1, axis=0, keepdims=True)
 
         # update weights and biases with regularization
@@ -126,7 +130,7 @@ class NeuralNetwork:
         self.b1 -= self.learning_rate * db1
 
     # training function with mini-batch training
-    def train(self, X, y, epochs, batch_size, save_path=None, lambda_reg=0.001):
+    def train(self, X, y, epochs, batch_size, save_path=None, lambda_reg=0.0001):
         epoch_losses = []
 
         for epoch in range(epochs):

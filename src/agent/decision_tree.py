@@ -19,10 +19,8 @@ if __name__ == '__main__':
 
     random_forest = RandomForestClassifier(n_estimators=100, random_state=42)  # 100 trees by default
 
-    # Train the Random Forest model on the training set
     random_forest.fit(X_train, y_train)
 
-    # Predictions on the validation set
     y_val_pred = random_forest.predict(X_val)
 
     # Accuracy

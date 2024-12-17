@@ -215,7 +215,7 @@ def add_synthetic_data():
     X = df.drop(columns=['Numerical Race'])
     y = df['Numerical Race']
 
-    # set target count for each class
+    # target count for each class
     target_count = 1020
 
     # the sampling strategy, setting each class to the target count
@@ -234,16 +234,14 @@ def add_synthetic_data():
     # Map the resampled numerical labels back to breed names
     race_description_resampled = [breed_mapping[label] for label in y_resampled]
 
-    # Combine the features and labels back into a single DataFrame
     df_resampled = pd.DataFrame(X_resampled, columns=X.columns)
     df_resampled['Numerical Race'] = y_resampled
-    df_resampled['Race Description'] = race_description_resampled  # Add the Race Description column
+    df_resampled['Race Description'] = race_description_resampled
 
     # save and shuffle the resulting DataFrame
     df_resampled = df_resampled.sample(frac=1, random_state=42).reset_index(drop=True)
     df_resampled.to_excel("balanced_train_data.xlsx", index=False)
 
-    # confirm balancing
     print(df_resampled['Numerical Race'].value_counts())
 
 def load_data(file_path):
