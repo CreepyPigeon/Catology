@@ -11,6 +11,8 @@ from rake_nltk import Rake
 from sklearn.feature_extraction.text import TfidfVectorizer
 from collections import Counter
 import matplotlib.pyplot as plt
+from transformers import pipeline
+import re
 
 
 def download_nltk_resource(resource_name):
@@ -63,8 +65,32 @@ def generate_sentences_for_keywords(text, keywords):
             if keyword.lower() in sentence.lower():
                 sentences_for_keywords.append(f"The keyword '{keyword}' appears in the sentence: {sentence}")
                 break  # stop after finding the first sentence with the keyword
-
+        print(keyword, sentence)
+        generated_by_gpt = generate_sentence_with_gpt(keyword, sentence)
+        cleanup_responses_from_string(generated_by_gpt)
     return sentences_for_keywords
+
+def generate_sentence_with_gpt(word, context):
+    prompt = f"Write a sentence with the word: '{word}'. Like this: '{context}'."
+
+    result = generator(prompt, max_length=45, num_return_sequences=1, no_repeat_ngram_size=2)
+    sentence = result[0]['generated_text']
+    print(sentence)
+    return sentence
+
+def cleanup_responses_from_string(input_string):
+    match = re.search(r"word: '(\w+)'", input_string)
+    if not match:
+        raise ValueError("Could not find the target word in the input string.")
+    target_word = match.group(1)
+
+    sentence_pattern = re.compile(rf"([^.!?]*\b{re.escape(target_word)}\b[^.!?]*[.!?])", re.IGNORECASE)
+
+    sentences = sentence_pattern.findall(input_string)
+
+    cleaned_sentences = [sentence.strip() for sentence in sentences]
+    print(f"Cleaned {cleaned_sentences[-1]}")
+    return cleaned_sentences
 
 def generate_alternative_text(text, replacement_ratio=0.2, replace_synonyms=True, replace_hypernyms=True,
                               replace_antonyms=True, new_filename='alternative.txt'):
@@ -212,21 +238,26 @@ def keywords_extraction(text):
     preprocessed_text = preprocess_text(text)
 
     keywords_tfidf = extract_keywords_tfidf(preprocessed_text, n_keywords=3)
-    keywords_rake = extract_keywords_rake(preprocessed_text, n_keywords=3)
+    #keywords_rake = extract_keywords_rake(preprocessed_text, n_keywords=3)
+
+    print(keywords_tfidf)
 
     sentences_for_keywords_tfidf = generate_sentences_for_keywords(text, keywords_tfidf)
-    sentences_for_keywords_rake = generate_sentences_for_keywords(text, keywords_rake)
+    #sentences_for_keywords_rake = generate_sentences_for_keywords(text, keywords_rake)
 
     print("Sentences for TF-IDF Keywords:")
     for sentence in sentences_for_keywords_tfidf:
         print(sentence)
 
-    print("\nSentences for RAKE Keywords:")
-    for sentence in sentences_for_keywords_rake:
-        print(sentence)
+    #print("\nSentences for RAKE Keywords:")
+    #for sentence in sentences_for_keywords_rake:
+    #    print(sentence)
 
 
 if __name__ == '__main__':
+
+    generator = pipeline('text-generation', model='HuggingFaceTB/SmolLM-135M', device=0)
+
 
     filename = 'input_file.txt'
     contents = read_content(filename, False)
@@ -238,16 +269,17 @@ if __name__ == '__main__':
     print(f"Language probabilities: {probabilities}")
 
     stylometric_analysis(contents)
-    # generate_alternative_text(contents, 0.2, False, False, True)
+    #generate_alternative_text(contents, 0.2, True, True, True)
     # text = "The house is far from the city."
-    """"
-    alternative_text = generate_alternative_text(text, replacement_ratio=0.2, replace_synonyms=True,
-                                                 replace_hypernyms=True, replace_antonyms=True)
+    """
+    #alternative_text = generate_alternative_text(text, replacement_ratio=0.2, replace_synonyms=True,
+    #                                             replace_hypernyms=True, replace_antonyms=True)
     """
     # print(alternative_text)
 
-    """
-    with open(filename, "r") as f:
-        content = f.read()
+    content = "The house is far from the city. It is a beautiful structure located on a hill. The dog is happy playing in the yard."
+    #with open(filename, "r") as f:
+    #    content = f.read()
+    content = "The house is far from the city. It is a beautiful structure located on a hill. The dog is happy playing in the yard."
     keywords_extraction(content)
-    """
+    #generate_sentence_with_gpt("house", "The house is far from the city")
