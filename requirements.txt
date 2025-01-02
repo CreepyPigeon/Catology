@@ -14,3 +14,4 @@ nltk~=3.9.1
 langdetect~=1.0.9
 imbalanced-learn~=0.12.4
 rake_nltk
+aiml~=0.9.2
