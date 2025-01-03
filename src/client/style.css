@@ -30,16 +30,16 @@ body {
 }
 
 /* Slide effect for image */
-.slide-up {
-    animation: slideImageUp 1s forwards;
+.slide-down {
+    animation: slideImageDown 1s forwards;
 }
 
-@keyframes slideImageUp {
+@keyframes slideImageDown {
     from {
         transform: translate(-50%, -50%); /* Keep the image centered initially */
     }
     to {
-        transform: translate(-50%, +450%); /* Move the image upwards */
+        transform: translate(-50%, +100vh); /* Move the image Downwards */
     }
 }
 
@@ -68,8 +68,21 @@ body {
 }
 
 #userInput {
-    width: 80%;
+    width: calc(100% - 200px); /* Leave space for the button */
     max-width: 500px;
     padding: 10px;
     border-radius: 5px;
+}
+
+button {
+    padding: 10px 20px;
+    border-radius: 5px;
+    background-color: #5a9186;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #497569;
 }
