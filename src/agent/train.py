@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 from matplotlib import pyplot as plt
 from sklearn.model_selection import KFold
 from sklearn.manifold import TSNE
-from architecture import NeuralNetwork, cross_entropy_loss
+from src.agent.architecture import NeuralNetwork, cross_entropy_loss
 from data.processed.data_processing import load_data, split_data
 from src.utils.plot_utils import plot_fold_accuracy, plot_all_folds
 
@@ -23,8 +23,8 @@ def normalize_data(X):
     return (X - np.min(X, axis=0)) / (np.max(X, axis=0) - np.min(X, axis=0))
 
 
-def import_hyperparameters():
-    with open('hyperparameters.yaml', 'r') as f:
+def import_hyperparameters(file='hyperparameters.yaml'):
+    with open(file, 'r') as f:
         loaded_hyperparameters = yaml.load(f, Loader=yaml.FullLoader)
 
     print("Loaded Hyperparameters:", loaded_hyperparameters)
