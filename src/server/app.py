@@ -6,13 +6,13 @@ from pathlib import Path
 app = FastAPI()
 
 # Directory setup for static files
-BASE_DIR = Path(__file__).resolve().parent
-app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
+BASE_DIR = Path(__file__).resolve().parent.parent
+app.mount("/client", StaticFiles(directory=BASE_DIR / "client"), name="client")
 
 # Serve HTML (index.html as a static file)
 @app.get("/")
 async def index():
-    return FileResponse(BASE_DIR / "static" / "index.html")
+    return FileResponse(BASE_DIR / "client" / "index.html")
 
 # Chat endpoint
 @app.post("/chat")
