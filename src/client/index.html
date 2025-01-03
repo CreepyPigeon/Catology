@@ -4,14 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CatGPT</title>
-    <link rel="stylesheet" href="/static/style.css">
-    <link rel="icon" type="image/x-icon" href="./static/Images/oglogo.png">
+    <link rel="stylesheet" href="/client/style.css">
+    <link rel="icon" type="image/x-icon" href="./client/Images/cat-gpt-logo.png">
 </head>
 <body>
 
     <!-- The image in the center -->
     <div id="photoContainer" onclick="revealChat()">
-        <img id="photo" src="./static/Images/oglogo.png" alt="Click to chat">
+        <img id="photo" src="./client/Images/cat-gpt-logo.png" alt="Click to chat">
     </div>
 
     <!-- Chatbox that will slide up -->
@@ -24,9 +24,13 @@
     <script>
         // Function to reveal the chatbox when the photo is clicked
         function revealChat() {
-            document.getElementById('photoContainer').classList.add('slide-up'); // Slide image up
+            document.getElementById('photoContainer').classList.add('slide-down'); // Slide image down
             document.getElementById('chatbox').style.display = 'block'; // Show chatbox
             document.getElementById('chatbox').classList.add('slide-up'); // Add slide-up effect to chatbox
+
+            photoContainer.addEventListener('animationend', () => {
+                photoContainer.style.display = 'none'; // Hide the image container
+                }, { once: true }); // Ensure the listener is removed after execution
         }
 
         // Function to send a message
