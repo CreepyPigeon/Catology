@@ -21,6 +21,7 @@ def download_nltk_resource(resource_name):
     except LookupError:
         nltk.download(resource_name)
 
+
 nltk.download('averaged_perceptron_tagger_eng')
 download_nltk_resource('punkt')
 download_nltk_resource('punkt-tab')
@@ -70,6 +71,7 @@ def generate_sentences_for_keywords(text, keywords):
         cleanup_responses_from_string(generated_by_gpt)
     return sentences_for_keywords
 
+
 def generate_sentence_with_gpt(word, context):
     prompt = f"Write a sentence with the word: '{word}'. Like this: '{context}'."
 
@@ -77,6 +79,7 @@ def generate_sentence_with_gpt(word, context):
     sentence = result[0]['generated_text']
     print(sentence)
     return sentence
+
 
 def cleanup_responses_from_string(input_string):
     match = re.search(r"word: '(\w+)'", input_string)
@@ -91,6 +94,7 @@ def cleanup_responses_from_string(input_string):
     cleaned_sentences = [sentence.strip() for sentence in sentences]
     print(f"Cleaned {cleaned_sentences[-1]}")
     return cleaned_sentences
+
 
 def generate_alternative_text(text, replacement_ratio=0.2, replace_synonyms=True, replace_hypernyms=True,
                               replace_antonyms=True, new_filename='alternative.txt'):
@@ -131,6 +135,7 @@ def generate_alternative_text(text, replacement_ratio=0.2, replace_synonyms=True
 
     return new_text
 
+
 def get_synonyms(word, replace_synonyms, pos):
     if not replace_synonyms:
         return []
@@ -145,6 +150,7 @@ def get_synonyms(word, replace_synonyms, pos):
 
     return list(synonyms)
 
+
 def get_hypernyms(word, replace_hypernyms, pos):
     if not replace_hypernyms:
         return []
@@ -158,6 +164,7 @@ def get_hypernyms(word, replace_hypernyms, pos):
 
     return list(hypernyms)
 
+
 def get_negated_antonym(word, replace_antonyms):
     if not replace_antonyms:
         return None
@@ -167,6 +174,7 @@ def get_negated_antonym(word, replace_antonyms):
             if lemma.antonyms():
                 return f"not {lemma.antonyms()[0].name().replace('_', ' ')}"
     return None
+
 
 def get_wordnet_pos(treebank_tag):
     if treebank_tag.startswith('NN'):
@@ -180,8 +188,8 @@ def get_wordnet_pos(treebank_tag):
     else:
         return wordnet.NOUN  # default to NOUN if unknown
 
-def stylometric_analysis(text):
 
+def stylometric_analysis(text):
     words = nltk.word_tokenize(text)
     words = [word for word in words if word.isalpha()]
     sentences = nltk.sent_tokenize(text)
@@ -218,6 +226,7 @@ def stylometric_analysis(text):
     plt.tight_layout()
     plt.show()
 
+
 def read_content(filename, read_from_console=False):
     if read_from_console:
         text = input('Enter some text here: ')
@@ -234,30 +243,29 @@ def read_content(filename, read_from_console=False):
     except FileNotFoundError:
         print("File not found")
 
+
 def keywords_extraction(text):
     preprocessed_text = preprocess_text(text)
 
     keywords_tfidf = extract_keywords_tfidf(preprocessed_text, n_keywords=3)
-    #keywords_rake = extract_keywords_rake(preprocessed_text, n_keywords=3)
+    # keywords_rake = extract_keywords_rake(preprocessed_text, n_keywords=3)
 
     print(keywords_tfidf)
 
     sentences_for_keywords_tfidf = generate_sentences_for_keywords(text, keywords_tfidf)
-    #sentences_for_keywords_rake = generate_sentences_for_keywords(text, keywords_rake)
+    # sentences_for_keywords_rake = generate_sentences_for_keywords(text, keywords_rake)
 
     print("Sentences for TF-IDF Keywords:")
     for sentence in sentences_for_keywords_tfidf:
         print(sentence)
 
-    #print("\nSentences for RAKE Keywords:")
-    #for sentence in sentences_for_keywords_rake:
+    # print("\nSentences for RAKE Keywords:")
+    # for sentence in sentences_for_keywords_rake:
     #    print(sentence)
 
 
 if __name__ == '__main__':
-
     generator = pipeline('text-generation', model='HuggingFaceTB/SmolLM-135M', device=0)
-
 
     filename = 'input_file.txt'
     contents = read_content(filename, False)
@@ -269,7 +277,7 @@ if __name__ == '__main__':
     print(f"Language probabilities: {probabilities}")
 
     stylometric_analysis(contents)
-    #generate_alternative_text(contents, 0.2, True, True, True)
+    # generate_alternative_text(contents, 0.2, True, True, True)
     # text = "The house is far from the city."
     """
     #alternative_text = generate_alternative_text(text, replacement_ratio=0.2, replace_synonyms=True,
@@ -278,8 +286,8 @@ if __name__ == '__main__':
     # print(alternative_text)
 
     content = "The house is far from the city. It is a beautiful structure located on a hill. The dog is happy playing in the yard."
-    #with open(filename, "r") as f:
+    # with open(filename, "r") as f:
     #    content = f.read()
     content = "The house is far from the city. It is a beautiful structure located on a hill. The dog is happy playing in the yard."
     keywords_extraction(content)
-    #generate_sentence_with_gpt("house", "The house is far from the city")
+    # generate_sentence_with_gpt("house", "The house is far from the city")
