@@ -1,16 +1,22 @@
-<aiml version="2.0">
+<?xml version="2.0" encoding="UTF-8"?>
+<aiml>
+    <category>
+        <pattern>What is your name</pattern>
+        <template>I am a chatbot created with AIML.</template>
+    </category>
+
+    <category>
+        <pattern>What is your name</pattern>
+        <template>I am a chatbot created with AIML.</template>
+    </category>
+
     <category>
         <pattern>HELLO</pattern>
         <template>Hello! How can I help you today?</template>
     </category>
 
     <category>
-        <pattern>what is your name ?</pattern>
-        <template>I am a chatbot created with AIML.</template>
-    </category>
-
-    <category>
-        <pattern>WHAT IS YOUR FAVORITE COLOR?</pattern>
+        <pattern>WHAT IS YOUR FAVOURITE COLOR</pattern>
         <template>My favorite color is blue.</template>
     </category>
 </aiml>

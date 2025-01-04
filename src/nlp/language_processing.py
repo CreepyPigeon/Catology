@@ -73,7 +73,7 @@ def generate_sentences_for_keywords(text, keywords):
 
 
 def generate_sentence_with_gpt(word, context):
-    prompt = f"Write a sentence with the word: '{word}'. Like this: '{context}'."
+    prompt = f"Write a sentence with the word: '{word}'."
 
     result = generator(prompt, max_length=258, num_return_sequences=1, no_repeat_ngram_size=2)
     sentence = result[0]['generated_text']
@@ -288,12 +288,8 @@ if __name__ == '__main__':
     content = "The house is far from the city. It is a beautiful structure located on a hill." \
               " The dog is happy playing in the yard."
     # with open(filename, "r") as f:
-    #    content = f.read()
-    content = "The house is far from the city. It is a beautiful structure located on a hill. " \
-              "The dog is happy playing in the yard."
-    with open(filename, "r") as f:
-        content = f.read()
+        # content = f.read()
     #content = "The house is far from the city. It is a beautiful structure located on a hill.
     # The dog is happy playing in the yard."
     keywords_extraction(content)
-    # generate_sentence_with_gpt("house", "The house is far from the city")
+    generate_sentence_with_gpt("house", "The house is far from the city")

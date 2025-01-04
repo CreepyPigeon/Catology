@@ -1,12 +1,17 @@
 import os
 from typing import List, Union
-from src.agent.train import import_hyperparameters
+
+import numpy as np
+
+from src.agent.custom_network.architecture import NeuralNetwork
+from src.agent.custom_network.train import import_hyperparameters
 import pandas as pd
 from dotenv import load_dotenv
 
 load_dotenv()
 train_dataset = os.getenv('BALANCED_DATASET')
 new_excel = os.getenv('NEW_EXCEL')
+saved_weights = os.getenv('TRAINED_WEIGHTS')
 hyperparameters_path = '../agent/hyperparameters.yaml'
 
 def build_comparison_list(file_path, first_race: str, second_race: str, num_instances: int = 500) -> tuple | None:
@@ -231,6 +236,24 @@ def add_new_instance(input_attributes: List[str], file_path=train_dataset, new_f
         return 1
     else:
         return -1
+
+def classify_instance(attributes, stored_weights=saved_weights):
+
+    i_epochs, i_input_size, i_hidden_size, i_output_size, i_learning_rate, i_batch_size = import_hyperparameters()
+
+    nn = NeuralNetwork(input_size=i_input_size, hidden_size=i_hidden_size, output_size=i_output_size,
+                       learning_rate=i_learning_rate)
+
+    nn.load_weights(stored_weights)
+    X_input = attributes.reshape(1, -1)  # reshape to a 2D array (batch size of 1)
+
+    raw_output = nn.forward(X_input)
+
+    print(f"Raw output(before softmax) for the input: {raw_output}")
+
+    prediction = np.argmax(raw_output, axis=1)
+
+    return prediction
 
 
 if __name__ == '__main__':

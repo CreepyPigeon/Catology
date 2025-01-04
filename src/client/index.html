@@ -21,40 +21,79 @@
         <button onclick="sendMessage()">Send</button>
     </div>
 
-    <script>
-        // Function to reveal the chatbox when the photo is clicked
-        function revealChat() {
-            document.getElementById('photoContainer').classList.add('slide-down'); // Slide image down
-            document.getElementById('chatbox').style.display = 'block'; // Show chatbox
-            document.getElementById('chatbox').classList.add('slide-up'); // Add slide-up effect to chatbox
+<script>
+    // Function to reveal the chatbox when the photo is clicked
+    function revealChat() {
+        document.getElementById('photoContainer').classList.add('slide-down'); // Slide image down
+        document.getElementById('chatbox').style.display = 'block'; // Show chatbox
+        document.getElementById('chatbox').classList.add('slide-up'); // Add slide-up effect to chatbox
 
-            photoContainer.addEventListener('animationend', () => {
-                photoContainer.style.display = 'none'; // Hide the image container
-                }, { once: true }); // Ensure the listener is removed after execution
-        }
+        photoContainer.addEventListener('animationend', () => {
+            photoContainer.style.display = 'none'; // Hide the image container
+        }, { once: true }); // Ensure the listener is removed after execution
+    }
 
-        // Function to send a message
-        async function sendMessage() {
-            const userInput = document.getElementById('userInput').value;
-            if (userInput.trim() === "") return; // Don't send if the input is empty
-            const response = await fetch('/chat', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({message: userInput})
-            });
-            const data = await response.json();
-            document.getElementById('chat').innerHTML += `<p><b>You:</b> ${userInput}</p><p><b>Bot:</b> ${data.response}</p>`;
-            document.getElementById('userInput').value = ""; // Clear the input field after sending
-        }
+    // Function to send a message
+async function sendMessage() {
+    const userInput = document.getElementById('userInput').value;
+    if (userInput.trim() === "") return; // Don't send if the input is empty
 
-        // Listen for Enter key to send the message
-        document.getElementById('userInput').addEventListener('keypress', function(event) {
-            if (event.key === 'Enter') {
-                event.preventDefault();
-                sendMessage();
-            }
+    const chatDiv = document.getElementById('chat');
+
+    // Append user's message to the chat
+    chatDiv.innerHTML += `<p><b>You:</b> ${userInput}</p>`;
+    document.getElementById('userInput').value = ""; // Clear input field
+
+    // Create a typing indicator
+    const typingIndicator = document.createElement('p');
+    typingIndicator.id = 'typing';
+    typingIndicator.innerHTML = "<b>Bot:</b> Typing...";
+    chatDiv.appendChild(typingIndicator);
+
+    try {
+        // Fetch the streaming response
+        const response = await fetch('/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: userInput })
         });
-    </script>
+
+        if (response.body) {
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder('utf-8');
+            let botResponse = "";
+
+            // Process the response chunks
+            while (true) {
+                const { value, done } = await reader.read();
+                if (done) break;
+
+                // Decode chunk and parse it
+                const chunk = decoder.decode(value);
+                const parsedChunk = JSON.parse(chunk);
+
+                // Directly update the typing indicator with the new chunk
+                typingIndicator.innerHTML = `<b>Bot:</b> ${parsedChunk.response}`;
+
+                // Wait a bit before processing the next chunk
+                await new Promise(resolve => setTimeout(resolve, 100)); // Simulate typing delay
+            }
+
+            // Replace the typing indicator with the final response
+            typingIndicator.remove();
+            chatDiv.innerHTML += `<p><b>Bot:</b> ${parsedChunk.response}</p>`;
+        }
+    } catch (error) {
+        console.error("Error fetching chat response:", error);
+
+        // Handle errors gracefully
+        typingIndicator.innerHTML = `<b>Bot:</b> Sorry, I encountered an error.`;
+    } finally {
+        // Ensure the scroll is updated to show the latest message
+        chatDiv.scrollTop = chatDiv.scrollHeight;
+    }
+}
+</script>
 
 </body>
 </html>

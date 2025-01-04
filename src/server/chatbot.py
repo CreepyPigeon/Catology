@@ -1,17 +1,21 @@
+import string
+
 import aiml
 
-def do_something():
-    kernel = aiml.Kernel()
-    kernel.learn("chat_rules.aiml")
+# Initialize AIML Kernel globally to avoid reloading for each request
+kernel = aiml.Kernel()
+kernel.learn("chat_rules.aiml")
 
-    while True:
-        print('YOU: ')
-        message = input()
-        if message == 'Exit':
-            break
-        response = kernel.respond(message)
-        print(f"Bot: {response}")
+def process_message(message: str) -> str:
+    # Normalize the message
+    message = message.lower().strip()
+    message = message.translate(str.maketrans('', '', string.punctuation))  # Remove punctuation
 
+    # Get the bot's response
+    response = kernel.respond(message)
 
-if __name__ == '__main__':
-    do_something()
+    if response:
+        return response
+    else:
+        # aici il b?gam pe gepeto la ac?iune
+        return "I am sorry but i cannot answer that yet"
