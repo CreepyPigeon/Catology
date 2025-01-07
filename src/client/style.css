@@ -21,6 +21,15 @@ body {
     width: 300px;
     height: 300px;
     border-radius: 10px;
+    transform: translate(0%, +25%); /* Keep the image centered initially */
+}
+
+#logo-text{
+  font-family: 'Courier New', monospace;
+  font-size: 3rem;
+  font-weight: bold;
+  color: #22383e;
+  text-shadow: 1px 1px 0 #999, 2px 2px 0 #666, 3px 3px 0 #333;
 }
 
 /* Initially hide the chatbox */
@@ -44,27 +53,37 @@ body {
 }
 
 /* Slide effect for chatbox */
-#chatbox.slide-up {
-    animation: slideChatUp 1s forwards;
+#chatbox.slide-down {
+    animation: slideChatDown 1s forwards;
 }
 
-@keyframes slideChatUp {
+@keyframes slideChatDown {
     from {
-        transform: translateY(100%);
+        transform: translateY(-100%);
     }
     to {
-        transform: translateY(0);
+        transform: translateY(650%);
     }
 }
 
 /* Chat container styling */
 #chat {
+    max-height: 70vh; /* Limit height to avoid overflow */
+    overflow-y: auto; /* Enable scrolling for overflow */
     background-color: white;
     padding: 20px;
     border-radius: 10px;
     box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
     max-width: 500px;
     margin: 0 auto;
+}
+
+#inputAndButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+      align-content: stretch;
+    padding: 10px;
 }
 
 #userInput {
@@ -74,15 +93,72 @@ body {
     border-radius: 5px;
 }
 
-button {
-    padding: 10px 20px;
+button {    padding: 10px 20px;
     border-radius: 5px;
-    background-color: #5a9186;
+    background-color: #497569;
     color: white;
     border: none;
     cursor: pointer;
 }
 
 button:hover {
+    background-color: #254239;
+}
+
+.message {
+    display: flex;
+    align-items: center;
+    margin: 10px 0;
+}
+
+/* User messages aligned to the right */
+.message.user {
+    justify-content: flex-end;
+}
+
+.message.user p {
     background-color: #497569;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 15px;
+    max-width: 70%;
+    text-align: left;
+}
+
+/* Bot messages aligned to the left */
+.message.bot {
+    justify-content: flex-start;
+}
+
+.bot-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-right: 10px;
+    object-fit: cover;
+}
+
+.message.bot p {
+    background-color: #d9d9d9;
+    color: black;
+    padding: 10px 15px;
+    border-radius: 15px;
+    max-width: 70%;
+    text-align: left;
+}
+
+#photoContainer img {
+    transition: transform 0.3s ease;
+    transform: translate(0%, 25%); /* Initial position */
+}
+
+#photoContainer #logo-text{
+    transition: transform 0.3s ease;
+}
+
+#photoContainer img:hover {
+    transform: translate(0%, 25%) scale(0.8); /* Keep position and scale together */}
+
+#photoContainer #logo-text:hover {
+    transform: scale(0.8);
 }
