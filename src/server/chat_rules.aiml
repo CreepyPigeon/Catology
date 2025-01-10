@@ -1,22 +1,31 @@
-<?xml version="2.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <aiml>
-    <category>
+     <category>
         <pattern>What is your name</pattern>
-        <template>I am a chatbot created with AIML.</template>
+        <template>
+            <random>
+                <li>I am a chatbot created for the final project from the 'Artificial Intelligence' course.</li>
+                <li>You can call me CatGPT, or even gepeto if you like.</li>
+                <li>My name is CatGPT, but friends call me gepeto</li>
+            </random>
+        </template>
     </category>
 
     <category>
-        <pattern>What is your name</pattern>
-        <template>I am a chatbot created with AIML.</template>
-    </category>
-
-    <category>
-        <pattern>HELLO</pattern>
+        <pattern>hello</pattern>
         <template>Hello! How can I help you today?</template>
+    </category>
+
+    <category>
+        <pattern>What is the meaning of life</pattern>
+        <template>
+        The meaning of life is subjective and varies for everyone. In the meantime, you can subscribe, smash that like button and hit the notification bell
+        </template>
     </category>
 
     <category>
         <pattern>WHAT IS YOUR FAVOURITE COLOR</pattern>
         <template>My favorite color is blue.</template>
     </category>
+
 </aiml>
