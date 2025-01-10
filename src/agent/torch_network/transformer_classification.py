@@ -6,6 +6,7 @@ from torch import nn
 from torch.utils.data import Dataset, DataLoader
 from sklearn.model_selection import train_test_split
 from data.processed.data_processing import load_data
+from src.utils.plot_utils import plot_fold_accuracy
 
 load_dotenv()
 train_data = os.getenv('BALANCED_DATASET')
@@ -159,6 +160,7 @@ def evaluate_model(model, val_loader, criterion, device):
 
     return val_loss
 
+
 def load_model(weights_file, input_size, output_size, d_model, n_head):
     model = TransformerModel(input_size, output_size, d_model, n_head)
     model.load_state_dict(torch.load(weights_file))
@@ -173,13 +175,13 @@ if __name__ == '__main__':
     train_dataset = CustomDataset(X_train, y_train)
     val_dataset = CustomDataset(X_val, y_val)
 
-    train_loader = DataLoader(train_dataset, batch_size=25, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=25, shuffle=False)
+    train_loader = DataLoader(train_dataset, batch_size=256, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=256, shuffle=True)
 
     input_size = 25  # number of features
     output_size = 14  # number of classes
     d_model = 128  # embedding size
-    attention_heads = 4  # number of attention heads
+    attention_heads = 8  # number of attention heads
 
     epochs = 50
     learning_rate = 0.001
@@ -187,5 +189,20 @@ if __name__ == '__main__':
 
     model = TransformerModel(input_size=input_size, d_model=d_model, nhead=attention_heads, num_classes=output_size)
     # print(model)
-
     train_model(model, train_loader, val_loader, epochs, learning_rate, weights_file)
+
+    # plot results
+    """
+    acc1 = [32.91, 41.74, 49.51, 56.62, 58.4, 62.78, 68.84, 70.27, 71.92, 76.65, 77.84, 77.24, 77.91,
+            80.78, 80.39, 81.34, 83.26, 81.65, 82.6, 83.47, 83.05, 84.03, 83.23, 83.54, 84.7, 84, 83.23,
+            84.91, 85.64, 84.14, 85.75, 86.2, 84.8, 86.2, 82.88, 85.89, 84.14, 86.06, 83.26, 85.78, 86.03,
+            86.66, 86.34, 85.96, 85.57, 86.38, 85.96, 85.43, 86.1, 85.64]
+
+    acc2 = [28.71, 42.58, 48.63, 60.4, 66, 68.98, 73.88, 77.73, 79.90, 80.25, 80.99, 81.86, 83.12, 83.51,
+            84.14, 84.94, 85.54, 85.5, 86.27, 85.82, 85.85, 86.62, 86.45, 87.18, 86.41, 86.97, 87.25, 86.9,
+            86.1, 86.27, 86.66, 87.82, 87.43, 87.92, 87.25, 86.76, 86.06, 87.11, 87.15, 87.57, 86.97, 87.57,
+            87.23, 88.34, 88.31, 87.1]
+
+    plot_fold_accuracy(acc1, 'batch_size = 50,d_model=128,attention_heads=4')
+    plot_fold_accuracy(acc2, 'batch_size = 128, d_model=128, attention_heads=4')
+    """
