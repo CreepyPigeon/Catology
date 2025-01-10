@@ -1,57 +1,56 @@
 import re
 
 def fun():
-    pattern = """add a new instance in the cat dataset. it is male, age 4, living in a rural area, spends medium time outside, 
-                 highly predictable, well-above friendly, medium distracted, not so afraid, and has highly mammal capturing frequency."""
+    pattern = """add a new instance in the cat dataset. it is of male, age 4, place of living: rural area, outdoors time: medium, 
+                 highly predictable, well-above friendly, medium distracted, not so much afraid, and has highly bird capturing frequency."""
 
-    # Define value keywords and their mappings to column names
-    column_mapping = {
-        'male': 'Sex',
-        'female': 'Sex',
-        'age': 'Age',
-        'living in a rural area': 'Place of living',
-        'living in a urban area': 'Place of living',
-        'living in a periurban area': 'Place of living',
-        'spends': 'Outdoors time',
-        'highly': 'Predictable',  # 'highly' maps to 'Predictable' column
-        'well-above': 'Friendly',  # 'well-above' maps to 'Friendly'
-        'medium': 'Distracted',  # 'medium' maps to 'Distracted'
-        'not so': 'Afraid',  # 'not so' maps to 'Afraid'
-        'has': 'Mammal capturing frequency'  # 'has' maps to 'Mammal capturing frequency'
-    }
+    # Initialize the mapping dictionary
+    attribute_mapping = []
 
-    # Regex pattern to match each part of the sentence
-    regex = r"(\b(?:male|female|age|living in a (?:rural|urban|periurban) area|spends|highly|well-above|medium|not so|has)\b)\s*(\w+|\d+|\w+\s\w+)"
+    # Regex to capture the attributes and values
 
-    # Find all matches
-    matches = re.findall(regex, pattern)
+    # as putea sa fac asta pentru fiecare coloana in parte
+    regex_patterns = [
+        (r"\bmale\b", "Sex"),  # Matches 'male'
+        (r"\bage (\d+)\b", "Age"),  # Matches 'age 4'
+        (r"\bplace of living: (rural area|urban area|periurban area)\b", "Place of living"),  # Matches place of living
+        (r"\boutdoors time: (medium|highly|well-above|not so much)\b", "Outdoors time"),  # Matches outdoors time
+        (r"\bhighly (predictable)\b", "Predictable"),  # Matches highly predictable
+        (r"\bwell-above (friendly)\b", "Friendly"),  # Matches well-above friendly
+        (r"\bmedium (distracted)\b", "Distracted"),  # Matches medium distracted
+        (r"\bnot so much (afraid)\b", "Afraid"),  # Matches not so much afraid
+        (r"\bhas highly (bird capturing frequency)\b", "Bird capturing frequency"),  # Matches bird capturing frequency
+    ]
 
-    # Initialize a dictionary to store the results
-    attribute_mapping = {}
+    # Loop through patterns and extract matches
+    for regex, column in regex_patterns:
+        match = re.search(regex, pattern)
+        if match:
+            value = match.group(1) if match.lastindex else match.group(0)
+            attribute_mapping.append({column: value})
 
-    # Process matches and map them
-    for match in matches:
-        keyword, value = match
+    # Print the result
+    print("Extracted Attributes:", attribute_mapping)
 
-        # Handle direct value-to-column mapping for known keywords
-        if keyword in column_mapping:
-            column = column_mapping[keyword]
-            if column not in attribute_mapping:
-                attribute_mapping[column] = []
-            attribute_mapping[column].append({"keyword": keyword, "value": value})
-        else:
-            # For combined value keywords like 'highly predictable'
-            if keyword in ['highly', 'well-above', 'medium', 'not so']:
-                # Extract the appropriate column based on the first part of the value (e.g., 'predictable' for 'highly predictable')
-                column = value  # Use the second word as the column
-                if column not in attribute_mapping:
-                    attribute_mapping[column] = []
-                attribute_mapping[column].append(
-                    {"keyword": keyword, "value": keyword})  # Keep the value as 'highly', 'medium', etc.
 
-    # Print the final attribute mapping
-    print("Final Attribute Mapping:", attribute_mapping)
+def process_attribute_mapping(attribute_mapping):
+    # Initialize the result list
+    processed_output = []
+
+    # Iterate over the dictionary
+    for column, entries in attribute_mapping.items():
+        for entry in entries:
+            # Create a dictionary for each column-value pair
+            processed_output.append({column: entry['keyword']})
+
+    return processed_output
 
 
 if __name__ == '__main__':
-    fun()
+
+    current_mapping = fun()
+    # output: Extracted Attributes: [{'Sex': 'male'}, {'Age': '4'}, {'Place of living': 'rural area'},
+    # {'Outdoors time': 'medium'}, {'Predictable': 'predictable'}, {'Friendly': 'friendly'}, {'Distracted': 'distracted'}, {'Afraid': 'afraid'}, {'Bird capturing frequency': 'bird capturing frequency'}]
+
+    # processed_output = process_attribute_mapping(current_mapping)
+    # print("Processed Output:", processed_output)
