@@ -1,18 +1,68 @@
 import os
-from typing import List, Union
-
 import numpy as np
-
-from src.agent.custom_network.architecture import NeuralNetwork
-from src.agent.custom_network.train import import_hyperparameters
 import pandas as pd
 from dotenv import load_dotenv
+from typing import List, Union, Dict
+from src.agent.custom_network.architecture import NeuralNetwork
+from src.agent.custom_network.train import import_hyperparameters
+
 
 load_dotenv()
 train_dataset = os.getenv('BALANCED_DATASET')
 new_excel = os.getenv('NEW_EXCEL')
 saved_weights = os.getenv('TRAINED_WEIGHTS')
 hyperparameters_path = '../agent/hyperparameters.yaml'
+
+"""
+define the column means as global variables, since they fill be frequently needed (exclude the last one, since it is
+non numeric
+"""
+data = pd.read_excel(train_dataset)
+numeric_columns = data.select_dtypes(include=['number'])
+column_means = numeric_columns.mean().to_dict()
+COLUMN_MEANS = column_means
+
+def get_column_means():
+    return COLUMN_MEANS
+
+def get_value_from_dictionary(keyword: str, column_name: str, dataset: pd.DataFrame):
+    """
+    get a value from the specified column based on the keyword and proportional to the max value of the column.
+
+    :param keyword: a string that defines the threshold ('highly', 'well-above', 'medium', 'not so')
+    :param column_name: The column name from which the value is retrieved
+    :param dataset: The DataFrame containing the data
+    :return: The value corresponding to the specified keyword
+    """
+
+    column_values = dataset[column_name]
+
+    # thresholds
+    max_value = column_values.max()
+    min_value = column_values.min()
+    mean_value = column_values.mean()
+    sixth_of_max = max_value / 6
+
+    if keyword == 'highly':
+        # top 1/6th of the max value
+        threshold = max_value - sixth_of_max
+        result = column_values[column_values >= threshold].max()
+    elif keyword == 'well-above':
+        # top 1/6 after the max value
+        threshold = max_value - 2 * sixth_of_max
+        result = column_values[column_values >= threshold].max()
+    elif keyword == 'medium':
+        #  the mean value for that column
+        result = mean_value
+    elif keyword == 'not so much':
+        # bottom 1/6 of the values
+        threshold = min_value + sixth_of_max
+        result = column_values[column_values <= threshold].min()
+    else:
+        print("Keyword not recognized! Use 'highly', 'well-above', 'medium', or 'not so'.")
+        return -1
+
+    return result
 
 def build_comparison_list(file_path, first_race: str, second_race: str, num_instances: int = 500) -> tuple | None:
     """
@@ -123,123 +173,177 @@ def compare_races(first_race: str, second_race: str, num_instances: int = 500, f
     result = response_template.format(**formatted_parts)
     print(result)
 
-def convert_attributes(input_attributes: List[str]) -> Union[List[float], int]:
+def complete_attributes(input_attributes: List[Dict[str, int]]) -> Union[List[float], int]:
 
     """
-    :param input_attributes: the raw attributes, some of them are categorical, some numerical
-    :return: a numerical (if applicable) list of all the attributes
+    completes missing attributes in input data using precomputed column means.
+
+    :param input_attributes: a list of dictionaries with specified attributes.
+    :return: a numerical list of all attributes, with missing values filled by column means.
     """
+    # the order of columns in the dataset
+    columns_in_order = [
+        "Sex", "Age", "Number of cats in the household", "Place of living",
+        "Urban/Rural area", "Outdoors time", "Time spent with cat", "Timid",
+        "Calm", "Afraid", "Intelligent", "Vigilant", "Persevering", "Affectionate",
+        "Friendly", "Lonely", "Brutal", "Dominant", "Aggressive", "Impulsive",
+        "Predictable", "Distracted", "Abundance of natural areas",
+        "Bird capturing frequency", "Mammal capturing frequency", "Numerical Race",
+        "Race Description"
+    ]
 
     converted_attributes = []
 
-    for index, value in enumerate(input_attributes):
+    flattened_attributes = {}
+    for attr in input_attributes:
+        flattened_attributes.update(attr)
 
-        try:
-            if index == 0:
-                new_attribute = 1 if value == "M" else 0
-            elif index == 3:
-                if value == "AAB":
-                    new_attribute = 1
-                elif value == "ML":
-                    new_attribute = 2
-                elif value == "MI":
-                    new_attribute = 3
-                else:
-                    new_attribute = 0  # default or unknown value
-            elif index == 4:
-                if value == 'R':
-                    new_attribute = 1
-                elif value == 'PU':
-                    new_attribute = 2
-                else:
-                    new_attribute = 0
-            else:  # numerical attributes
-                new_attribute = float(value)  # try converting to float
-                if new_attribute < 0:  # check for invalid value
-                    return -1
-            converted_attributes.append(new_attribute)
-        except ValueError:
-            return -1
+    for column in columns_in_order:
+        if column == 'Race Description' or column == 'Numerical Race':
+            # skip Race Description column
+            continue
 
-    numerical_race = 0
-    race_description = ''
+        if column in flattened_attributes:
+            # use the value from input_attributes if present
+            converted_attributes.append(flattened_attributes[column])
+        else:
+            # otherwise, use the mean value
+            column_mean_values = get_column_means()
+            if column in column_means:
+                converted_attributes.append(column_mean_values[column])
+            else:
+                # no mean is available, should be impossible
+                converted_attributes.append(None)
 
     """
     adding the last 2 columns in order to prepare the list for addition in the dataframe
     """
 
-    if len(input_attributes) > 26:
-        if input_attributes[25] == 'Birman':
-            numerical_race = 0
-            race_description = 'Birman'
-        if input_attributes[25] == 'European':
-            numerical_race = 1
-            race_description = 'European'
-        if input_attributes[25] == 'No breed':
-            numerical_race = 2
-            race_description = 'No breed'
-        if input_attributes[25] == 'Maine coon':
-            numerical_race = 3
-            race_description = 'Maine coon'
-        if input_attributes[25] == 'Bengal':
-            numerical_race = 4
-            race_description = 'Bengal'
-        if input_attributes[25] == 'Persian':
-            numerical_race = 5
-            race_description = 'Persian'
-        if input_attributes[25] == 'Oriental':
-            numerical_race = 6
-            race_description = 'Oriental'
-        if input_attributes[25] == 'British Shorthair':
-            numerical_race = 7
-            race_description = 'British Shorthair'
-        if input_attributes[25] == 'Other':
-            numerical_race = 8
-            race_description = 'Other'
-        if input_attributes[25] == 'Chartreux':
-            numerical_race = 9
-            race_description = 'Chartreux'
-        if input_attributes[25] == 'Ragdoll':
-            numerical_race = 10
-            race_description = 'Ragdoll'
-        if input_attributes[25] == 'Turkish angora':
-            numerical_race = 11
-            race_description = 'Turkish angora'
-        if input_attributes[25] == 'Sphynx':
-            numerical_race = 12
-            race_description = 'Sphynx'
-        if input_attributes[25] == 'Savannah':
-            numerical_race = 13
-            race_description = 'Savannah'
+    # if the input contains it, add it
+    numerical_race = 0
+    race_description = ''
+    found_race = False
+    for attr in input_attributes:
+        if 'Race Description' in attr:
+            if 'Race Description' == 'Birman':
+                numerical_race = 0
+                race_description = 'Birman'
+            if 'Race Description' == 'European':
+                numerical_race = 1
+                race_description = 'European'
+            if 'Race Description' == 'No breed':
+                numerical_race = 2
+                race_description = 'No breed'
+            if 'Race Description' == 'Maine coon':
+                numerical_race = 3
+                race_description = 'Maine coon'
+            if 'Race Description' == 'Bengal':
+                numerical_race = 4
+                race_description = 'Bengal'
+            if 'Race Description' == 'Persian':
+                numerical_race = 5
+                race_description = 'Persian'
+            if 'Race Description' == 'Oriental':
+                numerical_race = 6
+                race_description = 'Oriental'
+            if 'Race Description' == 'British Shorthair':
+                numerical_race = 7
+                race_description = 'British Shorthair'
+            if 'Race Description' == 'Other':
+                numerical_race = 8
+                race_description = 'Other'
+            if 'Race Description' == 'Chartreux':
+                numerical_race = 9
+                race_description = 'Chartreux'
+            if 'Race Description' == 'Ragdoll':
+                numerical_race = 10
+                race_description = 'Ragdoll'
+            if 'Race Description' == 'Turkish angora':
+                numerical_race = 11
+                race_description = 'Turkish angora'
+            if 'Race Description' == 'Sphynx':
+                numerical_race = 12
+                race_description = 'Sphynx'
+            if 'Race Description' == 'Savannah':
+                numerical_race = 13
+                race_description = 'Savannah'
 
-        converted_attributes.append(numerical_race)
-        converted_attributes.append(race_description)
-    else:
-        converted_attributes.append('Unknown')
-        converted_attributes.append('Unknown')
+            found_race = True
+            converted_attributes.append(numerical_race)
+            converted_attributes.append(race_description)
+
+    print(f"converted_attributes before classification {converted_attributes}")
+    # classify the instance and append its most probable class
+    if not found_race:
+        add_label(converted_attributes)
 
     return converted_attributes
 
-def add_new_instance(input_attributes: List[str], file_path=train_dataset, new_file_path=new_excel):
+def add_label(attributes):
+
+    """
+    :return: return the most probable class after classification
+    """
+
+    race_description = ''
+    label = classify_instance(np.array(attributes))
+
+    if label == 0:
+        race_description = 'Birman'
+    if label == 1:
+        race_description = 'European'
+    if label == 2:
+        race_description = 'No breed'
+    if label == 3:
+        race_description = 'Maine coon'
+    if label == 4:
+        race_description = 'Bengal'
+    if label == 5:
+        race_description = 'Persian'
+    if label == 6:
+        race_description = 'Oriental'
+    if label == 7:
+        race_description = 'British Shorthair'
+    if label == 8:
+        race_description = 'Other'
+    if label == 9:
+        race_description = 'Chartreux'
+    if label == 10:
+        race_description = 'Ragdoll'
+    if label == 11:
+        race_description = 'Turkish angora'
+    if label == 12:
+        race_description = 'Sphynx'
+    if label == 13:
+        race_description = 'Savannah'
+
+    attributes.append(label)
+    attributes.append(race_description)
+    print(f"Most probable class {race_description}")
+    return attributes
+
+def add_new_instance(column_names: List[Dict[str, int]], file_path=train_dataset, new_file_path=new_excel):
+
+    """
+    :param column_names: the input column names, given as a list of key-value pairs (column_name:value)
+     got after a pre-processing step
+    :param file_path:
+    :param new_file_path:
+    :return:
+    """
 
     df = pd.read_excel(file_path)
-    new_row = convert_attributes(input_attributes)
+    new_row = complete_attributes(column_names)
 
-    if isinstance(new_row, int):
-        return -1
-    _, input_size, _, _, _, _ = import_hyperparameters(hyperparameters_path)
+    df.loc[len(df)] = new_row
+    df.to_excel(new_file_path, index=False)
+    print('New row added successfully')
 
-    if input_size == len(input_attributes) or input_size == len(input_attributes) - 1:
-        df.loc[len(df)] = new_row
-        df.to_excel(new_file_path, index=False)
-        print('New row added successfully')
-        return 1
-    else:
-        return -1
+    return 1
 
-def classify_instance(attributes, stored_weights=saved_weights):
+def classify_instance(attributes, stored_weights=saved_weights, file=hyperparameters_path):
 
-    i_epochs, i_input_size, i_hidden_size, i_output_size, i_learning_rate, i_batch_size = import_hyperparameters()
+    i_epochs, i_input_size, i_hidden_size, i_output_size, i_learning_rate, i_batch_size = import_hyperparameters(file)
 
     nn = NeuralNetwork(input_size=i_input_size, hidden_size=i_hidden_size, output_size=i_output_size,
                        learning_rate=i_learning_rate)
@@ -257,5 +361,5 @@ def classify_instance(attributes, stored_weights=saved_weights):
 
 
 if __name__ == '__main__':
-    x_in = ["F", 2, 3, "MI", "PU", 1, 1, 0, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 3, 4]
-    add_new_instance(x_in)
+    input_dict = [{'Lonely': 3}, {'Brutal': 4}, {'Dominant':2}, {'Aggressive':1}]
+    add_new_instance(input_dict)
