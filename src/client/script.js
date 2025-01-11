@@ -2,6 +2,7 @@
 function revealChat() {
     const chatbox = document.getElementById('chatbox');
     const photoContainer = document.getElementById('photoContainer');
+    const userInputField = document.getElementById('userInput');
 
     if (!chatbox.classList.contains('slide-down')) {
         photoContainer.classList.add('slide-down'); // Slide image down
@@ -21,15 +22,22 @@ function revealChat() {
             chatbox.style.left = '0';
             chatbox.style.width = '100%';
         }, { once: true });
+
+        userInputField.focus();
     }
 }
 
 // Function to send a message
 async function sendMessage() {
     const userInput = document.getElementById('userInput').value;
+    const userInputField = document.getElementById('userInput');
+    const sendButton = document.querySelector('button');
     if (userInput.trim() === "") return; // Don't send if the input is empty
 
     const chatDiv = document.getElementById('chat');
+
+    userInputField.disabled = true;
+    sendButton.disabled = true;
 
     // Append user's message to the chat
     chatDiv.innerHTML += `<div class="message user"><p>${userInput}</p></div>`;
@@ -96,6 +104,10 @@ async function sendMessage() {
     } finally {
         // Ensure the scroll is updated
         chatDiv.scrollTop = chatDiv.scrollHeight;
+
+        userInputField.disabled = false;
+        sendButton.disabled = false;
+        userInputField.focus();
     }
 }
 
