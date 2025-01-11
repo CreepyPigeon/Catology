@@ -32,7 +32,7 @@ async function sendMessage() {
     const chatDiv = document.getElementById('chat');
 
     // Append user's message to the chat
-    chatDiv.innerHTML += `<div class="message user"><p><b>You:</b> ${userInput}</p></div>`;
+    chatDiv.innerHTML += `<div class="message user"><p>${userInput}</p></div>`;
 
     // Scroll to the latest message
     chatDiv.scrollTop = chatDiv.scrollHeight;
@@ -44,8 +44,8 @@ async function sendMessage() {
     const botResponseContainer = document.createElement('div');
     botResponseContainer.classList.add('message', 'bot');
     botResponseContainer.innerHTML = `
-        <img src="./client/Images/cat-gpt-logo.png" alt="Bot" class="bot-icon">
-        <p><b>Bot is typing...</b></p>
+        <img src="./client/Images/cat-gpt-logo.png" alt="CatGPT: " class="bot-icon">
+        <p><b>CatGPT is typing...</b></p>
     `;
     chatDiv.appendChild(botResponseContainer);
 
@@ -73,7 +73,7 @@ async function sendMessage() {
                 // Update the bot's response
                 botResponse = parsedChunk.response;
                 botResponseContainer.innerHTML = `
-                    <img src="./client/Images/cat-gpt-logo.png" alt="Bot" class="bot-icon">
+                    <img src="./client/Images/cat-gpt-logo.png" alt="CatGPT: " class="bot-icon">
                     <p>${botResponse}</p>
                 `;
             }
@@ -81,7 +81,7 @@ async function sendMessage() {
             // Handle non-streaming response
             const data = await response.json();
             botResponseContainer.innerHTML = `
-                <img src="./client/Images/cat-gpt-logo.png" alt="Bot" class="bot-icon">
+                <img src="./client/Images/cat-gpt-logo.png" alt="CatGPT: " class="bot-icon">
                 <p>${data.response}</p>
             `;
         }
@@ -90,8 +90,8 @@ async function sendMessage() {
 
         // Display error message
         botResponseContainer.innerHTML = `
-            <img src="./client/Images/cat-gpt-logo.png" alt="Bot" class="bot-icon">
-            <p><b>Bot:</b> Sorry, I encountered an error.</p>
+            <img src="./client/Images/cat-gpt-logo.png" alt="CatGPT: " class="bot-icon">
+            <p>Sorry, I encountered an error.</p>
         `;
     } finally {
         // Ensure the scroll is updated

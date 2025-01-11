@@ -29,7 +29,6 @@ body {
   font-size: 3rem;
   font-weight: bold;
   color: #22383e;
-  text-shadow: 1px 1px 0 #999, 2px 2px 0 #666, 3px 3px 0 #333;
 }
 
 /* Initially hide the chatbox */
@@ -152,13 +151,5 @@ button:hover {
     transform: translate(0%, 25%); /* Initial position */
 }
 
-#photoContainer #logo-text{
-    transition: transform 0.3s ease;
-}
-
 #photoContainer img:hover {
     transform: translate(0%, 25%) scale(0.8); /* Keep position and scale together */}
-
-#photoContainer #logo-text:hover {
-    transform: scale(0.8);
-}
