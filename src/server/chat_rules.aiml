@@ -16,6 +16,45 @@
         <template>Hello! How can I help you today?</template>
     </category>
 
+     <category>
+        <pattern>GENERATE A NATURAL LANGUAGE COMPARISON BETWEEN</pattern>
+        <template>
+            <random>
+                <li>Got it! You want a comparison between <get name="race1"/> and <get name="race2"/>.</li>
+                <li>Okay, comparing <get name="race1"/> and <get name="race2"/>. What would you like to know about them?</li>
+                <li>Great! Comparing <get name="race1"/> and <get name="race2"/>. I'll generate the comparison soon.</li>
+            </random>
+        </template>
+    </category>
+
+    <category>
+        <pattern>How good are you at the cat classification task</pattern>
+        <template>
+            <random>
+                <li>I can .</li>
+                <li>Okay, comparing <get name="race1"/> and <get name="race2"/>. What would you like to know about them?</li>
+                <li>Great! Comparing <get name="race1"/> and <get name="race2"/>. I'll generate the comparison soon.</li>
+            </random>
+        </template>
+    </category>
+
+    <category>
+        <pattern>hi</pattern>
+        <template>Hello! How can I help you today?</template>
+    </category>
+
+    <category>
+        <pattern>tell me a joke</pattern>
+        <template>Yeah, sure... A skeleton walks into a pub. It orders a beer and a mop :)) </template>
+    </category>
+
+    <category>
+        <pattern>ADD A NEW INSTANCE IN THE CAT DATASET*</pattern>
+        <template>
+        It might take a while... Instance added successfully
+        </template>
+    </category>
+
     <category>
         <pattern>What is the meaning of life</pattern>
         <template>

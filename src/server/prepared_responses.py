@@ -25,17 +25,18 @@ COLUMN_MEANS = column_means
 def get_column_means():
     return COLUMN_MEANS
 
-def get_value_from_dictionary(keyword: str, column_name: str, dataset: pd.DataFrame):
+def get_value_from_dictionary(keyword: str, column_name: str):
     """
     get a value from the specified column based on the keyword and proportional to the max value of the column.
 
-    :param keyword: a string that defines the threshold ('highly', 'well-above', 'medium', 'not so')
+    :param keyword: a string that defines the threshold ('highly', 'high', 'well-above', 'medium',
+                    'not so', 'not so much')
     :param column_name: The column name from which the value is retrieved
     :param dataset: The DataFrame containing the data
     :return: The value corresponding to the specified keyword
     """
 
-    column_values = dataset[column_name]
+    column_values = data[column_name]
 
     # thresholds
     max_value = column_values.max()
@@ -43,7 +44,7 @@ def get_value_from_dictionary(keyword: str, column_name: str, dataset: pd.DataFr
     mean_value = column_values.mean()
     sixth_of_max = max_value / 6
 
-    if keyword == 'highly':
+    if keyword == 'highly' or keyword == 'high':
         # top 1/6th of the max value
         threshold = max_value - sixth_of_max
         result = column_values[column_values >= threshold].max()
@@ -54,15 +55,39 @@ def get_value_from_dictionary(keyword: str, column_name: str, dataset: pd.DataFr
     elif keyword == 'medium':
         #  the mean value for that column
         result = mean_value
-    elif keyword == 'not so much':
+    elif keyword == 'not so much' or keyword == 'not so':
         # bottom 1/6 of the values
         threshold = min_value + sixth_of_max
         result = column_values[column_values <= threshold].min()
     else:
-        print("Keyword not recognized! Use 'highly', 'well-above', 'medium', or 'not so'.")
+        print("Keyword not recognized! Use 'highly', 'high, 'well-above', 'medium', or 'not so', 'not so much.")
         return -1
 
     return result
+
+def get_numerical_mapping(mapping, dataset=data):
+    numerical_mapping = []
+    for item in mapping:
+        for column_name, keyword in item.items():
+            if column_name == "Sex":
+                # special case for Sex
+                if keyword == "male":
+                    numerical_mapping.append({column_name: 1})
+                elif keyword == "female":
+                    numerical_mapping.append({column_name: 0})
+                else:
+                    print(f"Unknown value for Sex: {keyword}")
+            elif column_name == "Age":
+                # age is numeric, so keep it as is
+                numerical_mapping.append({column_name: int(keyword)})
+            elif column_name in dataset.columns:
+                # Use the existing function for other attributes
+                numerical_value = get_value_from_dictionary(keyword, column_name)
+                numerical_mapping.append({column_name: numerical_value})
+            else:
+                return -1
+    return numerical_mapping
+
 
 def build_comparison_list(file_path, first_race: str, second_race: str, num_instances: int = 500) -> tuple | None:
     """
@@ -79,10 +104,10 @@ def build_comparison_list(file_path, first_race: str, second_race: str, num_inst
     if df is None:
         return None
 
-    columns1 = df['Race Description'] == first_race
-    columns2 = df['Race Description'] == second_race
+    columns1 = df['Race Description'].str.lower() == first_race.lower()
+    columns2 = df['Race Description'].str.lower() == second_race.lower()
 
-    if columns1 is None or columns2 is None:
+    if not columns1.any() or not columns2.any():
         return None
 
     first_instance_list = df[columns1]
@@ -118,7 +143,7 @@ def compare_races(first_race: str, second_race: str, num_instances: int = 500, f
     result = build_comparison_list(file_path, first_race, second_race, num_instances)
 
     if result is None:
-        return "One or both of the specified cat breeds don't exist"
+        return "One or both of the specified cat breeds doesn't exist"
     else:
         column_names, comparison_list = result
 
@@ -171,9 +196,9 @@ def compare_races(first_race: str, second_race: str, num_instances: int = 500, f
             formatted_parts['number_of_times9'] = percentage
 
     result = response_template.format(**formatted_parts)
-    print(result)
+    return result
 
-def complete_attributes(input_attributes: List[Dict[str, int]]) -> Union[List[float], int]:
+def complete_attributes(input_attributes: List[Dict[str, int]]):
 
     """
     completes missing attributes in input data using precomputed column means.
@@ -275,9 +300,9 @@ def complete_attributes(input_attributes: List[Dict[str, int]]) -> Union[List[fl
     print(f"converted_attributes before classification {converted_attributes}")
     # classify the instance and append its most probable class
     if not found_race:
-        add_label(converted_attributes)
+        _, race_description = add_label(converted_attributes)
 
-    return converted_attributes
+    return converted_attributes, race_description
 
 def add_label(attributes):
 
@@ -320,26 +345,26 @@ def add_label(attributes):
     attributes.append(label)
     attributes.append(race_description)
     print(f"Most probable class {race_description}")
-    return attributes
+    return attributes, race_description
 
 def add_new_instance(column_names: List[Dict[str, int]], file_path=train_dataset, new_file_path=new_excel):
 
     """
+    :param new_file_path:
+    :param file_path:
     :param column_names: the input column names, given as a list of key-value pairs (column_name:value)
      got after a pre-processing step
-    :param file_path:
-    :param new_file_path:
-    :return:
     """
 
     df = pd.read_excel(file_path)
-    new_row = complete_attributes(column_names)
+    new_row, label = complete_attributes(column_names)
+    print(f"new_row = {new_row}")
 
     df.loc[len(df)] = new_row
     df.to_excel(new_file_path, index=False)
     print('New row added successfully')
 
-    return 1
+    return label
 
 def classify_instance(attributes, stored_weights=saved_weights, file=hyperparameters_path):
 

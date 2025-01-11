@@ -1,56 +1,75 @@
 import re
 
-def fun():
-    pattern = """add a new instance in the cat dataset. it is of male, age 4, place of living: rural area, outdoors time: medium, 
-                 highly predictable, well-above friendly, medium distracted, not so much afraid, and has highly bird capturing frequency."""
+def get_mapping_instance_addition(pattern):
 
-    # Initialize the mapping dictionary
     attribute_mapping = []
 
-    # Regex to capture the attributes and values
+    # patterns with options for attributes that require it
+    options = {
+        "Outdoors time": r"(medium|highly|high|well-above|not so much|not so)",
+        "Predictable": r"(medium|highly|high|well-above|not so much|not so)",
+        "Distracted": r"(medium|highly|high|well-above|not so much|not so)",
+        "Numer of cats in the household": r"(medium|highly|high|well-above|not so much|not so)",
+        "Time spent with cat": r"(medium|highly|high|well-above|not so much|not so)",
+        "Timid": r"(medium|highly|high|well-above|not so much|not so)",
+        "Calm": r"(medium|highly|high|well-above|not so much|not so)",
+        "Intelligent": r"(medium|highly|high|well-above|not so much|not so)",
+        "Vigilant": r"(medium|highly|high|well-above|not so much|not so)",
+        "Persevering": r"(medium|highly|high|well-above|not so much|not so)",
+        "Affectionate": r"(medium|highly|high|well-above|not so much|not so)",
+        "Friendly": r"(medium|highly|high|well-above|not so much|not so)",
+        "Lonely": r"(medium|highly|high|well-above|not so much|not so)",
+        "Brutal": r"(medium|highly|high|well-above|not so much|not so)",
+        "Afraid": r"(medium|highly|high|well-above|not so much|not so)",
+        "Dominant": r"(medium|highly|high|well-above|not so much|not so)",
+        "Aggressive": r"(medium|highly|high|well-above|not so much|not so)",
+        "Impulsive": r"(medium|highly|high|well-above|not so much|not so)",
+        "Abundance of natural areas": r"(medium|highly|high|well-above|not so much|not so)",
+        "Mammal capturing frequency": r"(medium|highly|high|well-above|not so much|not so)",
+        "Bird capturing frequency": r"(medium|highly|high|well-above|not so much|not so)"
+    }
 
-    # as putea sa fac asta pentru fiecare coloana in parte
+    # regex patterns for all attributes
     regex_patterns = [
-        (r"\bmale\b", "Sex"),  # Matches 'male'
-        (r"\bage (\d+)\b", "Age"),  # Matches 'age 4'
-        (r"\bplace of living: (rural area|urban area|periurban area)\b", "Place of living"),  # Matches place of living
-        (r"\boutdoors time: (medium|highly|well-above|not so much)\b", "Outdoors time"),  # Matches outdoors time
-        (r"\bhighly (predictable)\b", "Predictable"),  # Matches highly predictable
-        (r"\bwell-above (friendly)\b", "Friendly"),  # Matches well-above friendly
-        (r"\bmedium (distracted)\b", "Distracted"),  # Matches medium distracted
-        (r"\bnot so much (afraid)\b", "Afraid"),  # Matches not so much afraid
-        (r"\bhas highly (bird capturing frequency)\b", "Bird capturing frequency"),  # Matches bird capturing frequency
+        (r"\b(male|female)\b", "Sex"),  # Exact match for 'male'
+        (r"\bage (\d+)\b", "Age"),  # age
+        (r"\bplace of living: (rural area|urban area|periurban area)\b", "Place of living"),  # Match place of living
     ]
 
-    # Loop through patterns and extract matches
+    # dynamic regex for options
+    for column, option_pattern in options.items():
+        regex_patterns.append((fr"\b{option_pattern} {column.lower()}\b", column))
+
+    # extract matches
     for regex, column in regex_patterns:
         match = re.search(regex, pattern)
         if match:
             value = match.group(1) if match.lastindex else match.group(0)
             attribute_mapping.append({column: value})
 
-    # Print the result
     print("Extracted Attributes:", attribute_mapping)
+    return attribute_mapping
 
+def get_two_breeds(message):
 
-def process_attribute_mapping(attribute_mapping):
-    # Initialize the result list
-    processed_output = []
+    # potentially multiple words
+    pattern = r"generate a natural language comparison between ([a-zA-Z\s]+) race and ([a-zA-Z\s]+) race"
 
-    # Iterate over the dictionary
-    for column, entries in attribute_mapping.items():
-        for entry in entries:
-            # Create a dictionary for each column-value pair
-            processed_output.append({column: entry['keyword']})
+    match = re.search(pattern, message)
+    if match:
+        race1 = match.group(1).strip()
+        race2 = match.group(2).strip()
+        print(f"Extracted races: {race1} and {race2}")
+    else:
+        return -1, -1
 
-    return processed_output
+    return race1, race2
 
 
 if __name__ == '__main__':
 
-    current_mapping = fun()
-    # output: Extracted Attributes: [{'Sex': 'male'}, {'Age': '4'}, {'Place of living': 'rural area'},
-    # {'Outdoors time': 'medium'}, {'Predictable': 'predictable'}, {'Friendly': 'friendly'}, {'Distracted': 'distracted'}, {'Afraid': 'afraid'}, {'Bird capturing frequency': 'bird capturing frequency'}]
+    input_pattern = """add a new instance in the cat dataset. it is a male, age 1, not so timid,
+        outdoors time: well-above, not so predictable, highly calm, highly brutal, not so impulsive,
+        and has highly mammal capturing frequency."""
 
-    # processed_output = process_attribute_mapping(current_mapping)
-    # print("Processed Output:", processed_output)
+    current_mapping = get_mapping_instance_addition(input_pattern)
