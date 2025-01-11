@@ -384,7 +384,129 @@ def classify_instance(attributes, stored_weights=saved_weights, file=hyperparame
 
     return prediction
 
+def describe_cat_breed(cat_breed, file_path=train_dataset):
+    """
+    :param cat_breed: The breed to be described. Capitalization doesn`t matter.
+    :param file_path: Path to the Excel dataset.
+    :return: Natural language description of a cat breed.
+    """
+
+    df = pd.read_excel(file_path)
+    breed_data = df[df['Race Description'].str.contains(cat_breed, case=False, na=False)]
+    significant_columns = []
+    result = f"The breed '{cat_breed}' has these characteristics:\n"
+
+    for column in df.columns:
+        if column == "Numerical Race":
+            continue
+
+        if pd.api.types.is_numeric_dtype(df[column]):
+            value_counts = breed_data[column].value_counts(normalize=True)
+            if not value_counts.empty:
+                most_frequent_value = value_counts.index[0]
+                proportion = value_counts.iloc[0]
+                if proportion >= 0.7:
+                    significant_columns.append((column, most_frequent_value, proportion))
+
+    if significant_columns:
+        for column, value, proportion in significant_columns:
+            if proportion < 0.9:
+                result += "Most cats "
+            else:
+                result += "The vast majority of the cats "
+
+            if column == 'Sex':
+                if value == 0:
+                    result += "are female.\n"
+                else:
+                    result += "are male.\n"
+            elif column == 'Age':
+                if value < 1:
+                    result += "are under one year old.\n"
+                elif value < 10:
+                    result += "are between 2 and 10 years old.\n"
+                else:
+                    result += "are over 10 years old.\n"
+            elif column == 'Number of cats in the household':
+                if value < 6:
+                    result += f"have {value} cats in the household.\n"
+                else:
+                    result += "have more than 5 cats in the household.\n"
+            elif column == 'Place of living':
+                options = {
+                    0: "live in an apartment without a balcony.",
+                    1: "live in an apartment with a balcony or terrace.",
+                    2: "live in a house in a subdivision.",
+                    3: "live in an individual house.",
+                }
+                result += options.get(value, "") + "\n"
+            elif column == 'Urban/Rural area':
+                options = {
+                    0: "live in an urban area.",
+                    1: "live in a rural area.",
+                    2: "live in a periurban area.",
+                }
+                result += options.get(value, "") + "\n"
+            elif column == 'Outdoors time':
+                options = {
+                    0: "spend no time outdoors.",
+                    1: "spend little time outdoors.",
+                    2: "spend moderate time outdoors.",
+                    3: "spend long time outdoors.",
+                    4: "live outdoors.",
+                }
+                result += options.get(value, "") + "\n"
+            elif column == 'Time spent with cat':
+                options = {
+                    0: "spend no time with their owners.",
+                    1: "spend little time with their owners.",
+                    2: "spend moderate time with their owners.",
+                    3: "spend lots of time with their owners.",
+                }
+                result += options.get(value, "") + "\n"
+            elif column in ['Timid', 'Calm', 'Afraid', 'Intelligent', 'Vigilant', 'Persevering', 'Affectionate', 'Friendly', 'Lonely', 'Brutal', 'Dominant', 'Aggressive', 'Impulsive', 'Predictable', 'Distracted']:
+                intensity = {
+                    1: "not ",
+                    2: "a bit ",
+                    3: "moderately ",
+                    4: "pretty ",
+                    5: "very ",
+                }
+                result += f"are {intensity.get(value, '')}{column}.\n"
+            elif column == 'Abundance of natural areas':
+                options = {
+                    1: "live in a place with few natural areas.",
+                    2: "live in a place with a moderate amount of natural areas.",
+                    3: "live in a place with lots of natural areas.",
+                }
+                result += options.get(value, "") + "\n"
+            elif column == 'Bird capturing frequency':
+                options = {
+                    0: "never capture birds.",
+                    1: "rarely capture birds.",
+                    2: "capture birds sometimes.",
+                    3: "capture birds often.",
+                    4: "capture birds very often.",
+                }
+                result += options.get(value, "") + "\n"
+            elif column == 'Mammal capturing frequency':
+                options = {
+                    0: "never capture mammals.",
+                    1: "rarely capture mammals.",
+                    2: "capture mammals sometimes.",
+                    3: "capture mammals often.",
+                    4: "capture mammals very often.",
+                }
+                result += options.get(value, "") + "\n"
+
+    else:
+        result += f"This cat breed is perfectly ordinary: '{cat_breed}'."
+
+    return result
 
 if __name__ == '__main__':
-    input_dict = [{'Lonely': 3}, {'Brutal': 4}, {'Dominant':2}, {'Aggressive':1}]
-    add_new_instance(input_dict)
+    #input_dict = [{'Lonely': 3}, {'Brutal': 4}, {'Dominant':2}, {'Aggressive':1}]
+    #add_new_instance(input_dict)
+
+    description_of_Sphynx = describe_cat_breed("Sphynx", train_dataset)
+    print(description_of_Sphynx)
