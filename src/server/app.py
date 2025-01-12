@@ -10,7 +10,14 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.responses import StreamingResponse
 from src.server.regex_commands import get_mapping_instance_addition, get_two_breeds
-from src.server.prepared_responses import get_numerical_mapping, add_new_instance, compare_races
+from src.server.prepared_responses import get_numerical_mapping, add_new_instance, compare_races, generate_gpt_response, clean_gpt_response, describe_cat_breed
+import re
+
+known_breeds = [
+    'Birman', 'European', 'No breed', 'Maine coon', 'Bengal', 'Persian',
+    'Oriental', 'British Shorthair', 'Other', 'Chartreux', 'Ragdoll',
+    'Turkish angora', 'Sphynx', 'Savannah'
+]
 
 app = FastAPI()
 
@@ -31,7 +38,7 @@ async def generate_response_json(response: str, flag):
     """Generate a JSON response word by word."""
     words = response.split()  # split the response into words
 
-    timer = random.uniform(0.25, 0.5)
+    timer = random.uniform(0.1, 0.25)
     partial_response = ""
     for word in words:
         partial_response += word + " "  # append the current word
@@ -63,8 +70,11 @@ def process_message(message: str):
     message = message.lower().strip()
     message = message.translate(str.maketrans('', '', string.punctuation))
 
+    breed_match = re.search(r"(describe|tell me about|what is|how is)\s*(\w+)\s*cat breed", message)
+
+
     response = kernel.respond(message)
-    print(f"Original: {original_message} | Processed: {message} | AIML Response: '{response}'")  # Debug
+    #print(f"Original: {original_message} | Processed: {message} | AIML Response: '{response}'")  # Debug
 
     if response:
         if "add a new instance in the cat dataset" in response.lower():
@@ -74,6 +84,13 @@ def process_message(message: str):
             return "New row added successfully", 1
         return response, 1  # Regular AIML response
     else:  # If AIML did not provide a response
+        if "describe" in message:
+            for breed in known_breeds:
+                if breed.lower() in message:
+                    breed_name = breed
+                    description = describe_cat_breed(breed_name)
+                    return description, 1
+
         if "add a new instance in the cat dataset" in message:
             mapping = get_mapping_instance_addition(message)
             numerical_mapping = get_numerical_mapping(mapping)
@@ -100,7 +117,14 @@ def process_message(message: str):
             else:
                 return "Sorry, I couldn't extract the races from the message.", 2
 
-        return "I am sorry but I cannot answer that yet", 2
+        else: # fallback to smolLM
+            gpt_generated_response = generate_gpt_response(original_message)
+            #print(gpt_generated_response)
+            cleaned_gpt_response = clean_gpt_response((gpt_generated_response))
+            #print(cleaned_gpt_response)
+            return cleaned_gpt_response, 1
+
+        return "I am sorry but I cannot answer that yet", 1
 
 
 if __name__ == "__main__":

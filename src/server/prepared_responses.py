@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 from typing import List, Union, Dict
 from src.agent.custom_network.architecture import NeuralNetwork
 from src.agent.custom_network.train import import_hyperparameters
+from transformers import AutoModelForCausalLM, AutoTokenizer
 
 
 load_dotenv()
@@ -503,6 +504,36 @@ def describe_cat_breed(cat_breed, file_path=train_dataset):
         result += f"This cat breed is perfectly ordinary: '{cat_breed}'."
 
     return result
+
+def generate_gpt_response(message):
+    checkpoint = "HuggingFaceTB/SmolLM-135M-Instruct"
+    device = "cpu"
+    tokenizer = AutoTokenizer.from_pretrained(checkpoint)
+    model = AutoModelForCausalLM.from_pretrained(checkpoint).to(device)
+
+    messages = [{"role": "system", "content": "You are a chatbot that talks about cats. Please answer all questions with a single short sentence. No explanations, just the answer."}, {"role": "user", "content": message}]
+    input_text = tokenizer.apply_chat_template(messages, tokenize=False)
+    #print(input_text)
+    inputs = tokenizer.encode(input_text, return_tensors="pt").to(device)
+    outputs = model.generate(inputs, max_new_tokens=32, temperature=0.1,top_p=0.9, do_sample=True, early_stopping=True)
+    #print(tokenizer.decode(outputs[0]))
+    response = tokenizer.decode(outputs[0])
+    return response
+
+def clean_gpt_response(response: str) -> str:
+    """
+    Cleans the response by removing tags and returning only the content after <|im_start|>assistant.
+    :param response: The raw response string.
+    :return: The cleaned response string.
+    """
+    # Split the response by '<|im_start|>' and take the content after the first occurrence.
+    parts = response.split('<|im_start|>assistant')
+
+    # If there's content after '<|im_start|>', return it; otherwise, return the original response.
+    if len(parts) > 1:
+        return parts[1].split('<|im_end|>')[0].strip()
+    return response  # In case there's no '<|im_start|>' tag, return the original response
+
 
 if __name__ == '__main__':
     #input_dict = [{'Lonely': 3}, {'Brutal': 4}, {'Dominant':2}, {'Aggressive':1}]
