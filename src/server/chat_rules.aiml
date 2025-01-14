@@ -4,7 +4,6 @@
         <pattern>What is your name</pattern>
         <template>
             <random>
-                <li>I am a chatbot created for the final project from the 'Artificial Intelligence' course.</li>
                 <li>You can call me CatGPT, or even gepeto if you like.</li>
                 <li>My name is CatGPT, but friends call me gepeto</li>
             </random>
@@ -12,8 +11,39 @@
     </category>
 
     <category>
+        <pattern>Who are your creators</pattern>
+        <template>
+           I am a chatbot created for the final project from the 'Artificial Intelligence' course, by some college students
+           Cosmin and Gabriel.
+        </template>
+    </category>
+
+    <category>
+        <pattern>what can you do</pattern>
+        <template>
+           I am a chatbot created for the final project from the 'Artificial Intelligence' course.
+           I can respond at certain questions linked directly to the project, crack some jokes, and even telling
+           you my favourite color.
+        </template>
+    </category>
+
+    <category>
+        <pattern>who are you</pattern>
+        <template>
+           I am a chatbot created for the final project from the 'Artificial Intelligence' course.
+           I can respond at certain questions linked directly to the project, crack some jokes, and even telling
+           you my favourite color.
+        </template>
+    </category>
+
+    <category>
         <pattern>hello</pattern>
-        <template>Hello! How can I help you today?</template>
+        <template>
+            <random>
+                <li>Hello! How can I help you today?</li>
+                <li>Howdy! I am CatGPT. How can I help you today?</li>
+            </random>
+          </template>
     </category>
 
      <category>
@@ -30,11 +60,8 @@
     <category>
         <pattern>How good are you at the cat classification task</pattern>
         <template>
-            <random>
-                <li>I can .</li>
-                <li>Okay, comparing <get name="race1"/> and <get name="race2"/>. What would you like to know about them?</li>
-                <li>Great! Comparing <get name="race1"/> and <get name="race2"/>. I'll generate the comparison soon.</li>
-            </random>
+            I have 85% accuracy using a feedforward neural network with two hidden layers,  90% accuracy using a transformer and/or
+            a random forest classifier
         </template>
     </category>
 
@@ -49,9 +76,27 @@
     </category>
 
     <category>
-        <pattern>ADD A NEW INSTANCE IN THE CAT DATASET*</pattern>
+        <pattern>tell me another joke</pattern>
+        <template>
+            <random>
+                <li>Hmm.. WHy are piggy banks so wise ? They're filled with common cents </li>
+                <li>Let me see.. Which days are the strongest? Saturday and Sunday. The rest are weekdays. </li>
+            </random>
+        </template>
+    </category>
+
+
+    <category>
+        <pattern>*ADD A NEW INSTANCE IN THE CAT DATASET*</pattern>
         <template>
         It might take a while... Instance added successfully
+        </template>
+    </category>
+
+    <category>
+        <pattern>*classify the next instance*</pattern>
+        <template>
+        It might take a while...
         </template>
     </category>
 
@@ -64,7 +109,7 @@
 
     <category>
         <pattern>WHAT IS YOUR FAVOURITE COLOR</pattern>
-        <template>My favorite color is blue.</template>
+        <template>Might sound too bland, but my favorite color is blue.</template>
     </category>
 
 </aiml>

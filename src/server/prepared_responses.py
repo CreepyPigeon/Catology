@@ -1,4 +1,6 @@
 import os
+import random
+
 import numpy as np
 import pandas as pd
 from dotenv import load_dotenv
@@ -197,7 +199,18 @@ def compare_races(first_race: str, second_race: str, num_instances: int = 500, f
             formatted_parts['number_of_times9'] = percentage
 
     result = response_template.format(**formatted_parts)
-    return result
+    return random_slice_response(result)
+
+def random_slice_response(response, min_phrases=3):
+    # split into phrases
+    phrases = response.split(". ")
+    # remove any empty strings (if present)
+    phrases = [phrase for phrase in phrases if phrase.strip()]
+    # shuffle the phrases
+    random.shuffle(phrases)
+    # at least `min_phrases` are included
+    selected_phrases = phrases[:max(min_phrases, random.randint(3, len(phrases)))]
+    return ". ".join(selected_phrases) + "."
 
 def complete_attributes(input_attributes: List[Dict[str, int]]):
 
@@ -348,9 +361,10 @@ def add_label(attributes):
     print(f"Most probable class {race_description}")
     return attributes, race_description
 
-def add_new_instance(column_names: List[Dict[str, int]], file_path=train_dataset, new_file_path=new_excel):
+def add_new_instance(column_names: List[Dict[str, int]], add, file_path=train_dataset, new_file_path=new_excel):
 
     """
+    :param add: boolean paramater, whether or not we should add the instance to the dataset, or just classify it
     :param new_file_path:
     :param file_path:
     :param column_names: the input column names, given as a list of key-value pairs (column_name:value)
@@ -361,9 +375,10 @@ def add_new_instance(column_names: List[Dict[str, int]], file_path=train_dataset
     new_row, label = complete_attributes(column_names)
     print(f"new_row = {new_row}")
 
-    df.loc[len(df)] = new_row
-    df.to_excel(new_file_path, index=False)
-    print('New row added successfully')
+    if add:
+        df.loc[len(df)] = new_row
+        df.to_excel(new_file_path, index=False)
+        print('New row added successfully')
 
     return label
 
@@ -515,7 +530,7 @@ def generate_gpt_response(message):
     input_text = tokenizer.apply_chat_template(messages, tokenize=False)
     #print(input_text)
     inputs = tokenizer.encode(input_text, return_tensors="pt").to(device)
-    outputs = model.generate(inputs, max_new_tokens=32, temperature=0.1,top_p=0.9, do_sample=True, early_stopping=True)
+    outputs = model.generate(inputs, max_new_tokens=64, temperature=0.1,top_p=0.9, do_sample=True, early_stopping=True)
     #print(tokenizer.decode(outputs[0]))
     response = tokenizer.decode(outputs[0])
     return response

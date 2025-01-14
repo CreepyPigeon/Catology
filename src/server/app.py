@@ -100,8 +100,24 @@ def process_message(message: str):
             else:
                 print(f"initial mapping = {mapping}")
                 print(f"numerical mapping = {numerical_mapping}")
-                most_probable_class = add_new_instance(numerical_mapping)
-                return f"New row added successfully. The cat is most probably of the following" \
+
+                to_add = True
+                add_new_instance(numerical_mapping, to_add)
+                return f"New row added successfully. What else can I do for you ?", 1
+
+        if "classify the next instance" in message:
+            mapping = get_mapping_instance_addition(message)
+            numerical_mapping = get_numerical_mapping(mapping)
+
+            if isinstance(numerical_mapping, int):
+                return "I didn't quite understand that. Some columns and/or values were unidentifiable"
+            else:
+                print(f"initial mapping = {mapping}")
+                print(f"numerical mapping = {numerical_mapping}")
+
+                to_add = False
+                most_probable_class = add_new_instance(numerical_mapping, to_add)
+                return f"Based on my reasoning, the cat is most probably of the following" \
                        f" race: {most_probable_class}", 1
 
         if "generate a natural language comparison between" in message:
@@ -117,14 +133,12 @@ def process_message(message: str):
             else:
                 return "Sorry, I couldn't extract the races from the message.", 2
 
-        else: # fallback to smolLM
+        else:  # fallback to smolLM
             gpt_generated_response = generate_gpt_response(original_message)
             #print(gpt_generated_response)
             cleaned_gpt_response = clean_gpt_response((gpt_generated_response))
             #print(cleaned_gpt_response)
             return cleaned_gpt_response, 1
-
-        return "I am sorry but I cannot answer that yet", 1
 
 
 if __name__ == "__main__":

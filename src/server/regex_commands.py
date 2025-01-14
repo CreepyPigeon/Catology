@@ -53,7 +53,8 @@ def get_mapping_instance_addition(pattern):
 def get_two_breeds(message):
 
     # potentially multiple words
-    pattern = r"generate a natural language comparison between ([a-zA-Z\s]+) race and ([a-zA-Z\s]+) race"
+    pattern = r"generate a natural language (?:description|comparison) between ([a-zA-Z\s]+) race and ([a-zA-Z\s]+) " \
+              r"race"
 
     match = re.search(pattern, message)
     if match:
