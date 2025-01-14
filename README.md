@@ -12,6 +12,4 @@ identifying its breed**
 
 * **Generating a natural language comparison between two breeds**  
 
-<img src="https://github.com/user-attachments/assets/366f2eec-e5dd-45d7-915d-ebfd28a40100" alt="Home Page" width="600">
-
 <img src="https://github.com/user-attachments/assets/655a29e2-bbb2-491e-941c-f470abfb9c60" alt="Dialogue Page" width="400">
