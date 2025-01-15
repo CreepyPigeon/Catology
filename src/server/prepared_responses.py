@@ -47,7 +47,7 @@ def get_value_from_dictionary(keyword: str, column_name: str):
     mean_value = column_values.mean()
     sixth_of_max = max_value / 6
 
-    if keyword == 'highly' or keyword == 'high':
+    if keyword == 'highly' or keyword == 'high' or keyword == 'very':
         # top 1/6th of the max value
         threshold = max_value - sixth_of_max
         result = column_values[column_values >= threshold].max()

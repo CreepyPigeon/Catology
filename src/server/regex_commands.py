@@ -6,27 +6,27 @@ def get_mapping_instance_addition(pattern):
 
     # patterns with options for attributes that require it
     options = {
-        "Outdoors time": r"(medium|highly|high|well-above|not so much|not so)",
-        "Predictable": r"(medium|highly|high|well-above|not so much|not so)",
-        "Distracted": r"(medium|highly|high|well-above|not so much|not so)",
-        "Numer of cats in the household": r"(medium|highly|high|well-above|not so much|not so)",
-        "Time spent with cat": r"(medium|highly|high|well-above|not so much|not so)",
-        "Timid": r"(medium|highly|high|well-above|not so much|not so)",
-        "Calm": r"(medium|highly|high|well-above|not so much|not so)",
-        "Intelligent": r"(medium|highly|high|well-above|not so much|not so)",
-        "Vigilant": r"(medium|highly|high|well-above|not so much|not so)",
-        "Persevering": r"(medium|highly|high|well-above|not so much|not so)",
-        "Affectionate": r"(medium|highly|high|well-above|not so much|not so)",
-        "Friendly": r"(medium|highly|high|well-above|not so much|not so)",
-        "Lonely": r"(medium|highly|high|well-above|not so much|not so)",
-        "Brutal": r"(medium|highly|high|well-above|not so much|not so)",
-        "Afraid": r"(medium|highly|high|well-above|not so much|not so)",
-        "Dominant": r"(medium|highly|high|well-above|not so much|not so)",
-        "Aggressive": r"(medium|highly|high|well-above|not so much|not so)",
-        "Impulsive": r"(medium|highly|high|well-above|not so much|not so)",
-        "Abundance of natural areas": r"(medium|highly|high|well-above|not so much|not so)",
-        "Mammal capturing frequency": r"(medium|highly|high|well-above|not so much|not so)",
-        "Bird capturing frequency": r"(medium|highly|high|well-above|not so much|not so)"
+        "Outdoors time": r"(medium|very|highly|high|well-above|not so much|not so)",
+        "Predictable": r"(medium|very|highly|high|well-above|not so much|not so)",
+        "Distracted": r"(medium|very|highly|high|well-above|not so much|not so)",
+        "Numer of cats in the household": r"(medium|very|highly|high|well-above|not so much|not so)",
+        "Time spent with cat": r"(medium|very|highly|high|well-above|not so much|not so)",
+        "Timid": r"(medium|very|highly|high|well-above|not so much|not so)",
+        "Calm": r"(medium|very|highly|high|well-above|not so much|not so)",
+        "Intelligent": r"(medium|very|highly|high|well-above|not so much|not so)",
+        "Vigilant": r"(medium|very|highly|high|well-above|not so much|not so)",
+        "Persevering": r"(medium|very|highly|high|well-above|not so much|not so)",
+        "Affectionate": r"(medium|very|highly|high|well-above|not so much|not so)",
+        "Friendly": r"(medium|very|highly|high|well-above|not so much|not so)",
+        "Lonely": r"(medium|very|highly|high|well-above|not so much|not so)",
+        "Brutal": r"(medium|very|highly|high|well-above|not so much|not so)",
+        "Afraid": r"(medium|very|highly|high|well-above|not so much|not so)",
+        "Dominant": r"(medium|very|highly|high|well-above|not so much|not so)",
+        "Aggressive": r"(medium|very|highly|high|well-above|not so much|not so)",
+        "Impulsive": r"(medium|very|highly|high|well-above|not so much|not so)",
+        "Abundance of natural areas": r"(medium|very|highly|high|well-above|not so much|not so)",
+        "Mammal capturing frequency": r"(medium|very|highly|high|well-above|not so much|not so)",
+        "Bird capturing frequency": r"(medium|very|highly|high|well-above|not so much|not so)"
     }
 
     # regex patterns for all attributes
